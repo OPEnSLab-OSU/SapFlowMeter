@@ -4,42 +4,50 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-period = 1000
-
-def load_data( filename, index ):
+def load_data( filename, index=0 ):
 	print("Loading data")
-	headers = ['Date', 'Upper', 'Lower']
-	dtypes = {'Date':'str', 'Upper':'float', 'Lower':'float'}
-	parse_dates = ['Date']
-	data = pd.read_csv(filename, memory_map=True, usecols = (1,2), #skiprows=index, nrows=period*200, 
-	header=None, names=headers) #, dtype=dtypes, parse_dates=parse_dates)
+	# Ignore the date column for now
+	data = pd.read_csv(filename, memory_map=True, usecols = (1,2), skiprows=index )
 	return data
 
-def filter_outliers( data ):
-	epsilon = 0.2
-	for i in range(1,data.size):
-		if abs(data.iloc[i] - data.iloc[i-1]) > epsilon:
-			data.iloc[i]=data.iloc[i-1]
 
-def calculate_flow( data ):
-	columns = ('Upper','Lower')
-	frames = int(data.shape[0]/period)
-	pulse = np.empty((frames,2))
-	for i in range(frames):
-		p = data.loc[:,columns].iloc[i*period:(i+1)*period].std()
-		pulse[i,:]=p
-	return pulse
-data = load_data(filename="sapflow.csv", index=960)
+# Takes a segment of data and calculates sap flow
+# Upper and Lower are pandas series, assumed to be the same length
+def calculate_flow( upper, lower ):
+	k = 1 # Not sure what constant to use
+	l = int(min(upper.size, lower.size)/2)
+	upper_slope = upper[l:].mean() - upper[:l].mean()
+	lower_slope = lower[l:].mean() - upper[:l].mean()
+	#print("Upper slope: ", upper_slope, "Lower slope: ", lower_slope)
+	return k * np.log(upper_slope/lower_slope)
 
-print("Filtering outliers")
-filter_outliers( data.loc[:,'Upper'] )
-filter_outliers( data.loc[:,'Lower'] )
 
-print("Calculating flow")
-pulse = calculate_flow( data )
+# The input is a pandas series
+# This function returns a list of tuples
+# I don't feel like actually finding the peaks and troughs, since our
+# our data is pretty noisy right now. So, we're doing this period-based.
+def find_peaks( data ):
+	# Rise time is about 40-60 seconds long (150 - 200 samples)
+	# Before the rise time, we may see the heat pulse of 6 seconds long.
+	# Period of the whole cycle is 5 minutes, or 990 samples
+	# In our case, we can start at zero
+	period = 990 # 5 minute period
+	rise_time = 150 # 40 second Rise time
+	size = data.shape[0]
+	flowrate = np.empty(int(size/period)+1)
+	j = 0
+	for i in range(0,size,period):
+		end = i+rise_time
+		flowrate[j]=calculate_flow(data.iloc[i:end, 0],data.iloc[i:end, 1])
+		j = j + 1
+	return flowrate
+	
+
+data = load_data("sapflow.csv", index=22) # The first 22 datapoints are junk
+
+print("Calculating sap flow")
+flowrate = find_peaks(data)
 
 print("Plotting data")
-#plt.plot(data['Upper','Lower'])
-plt.plot(pulse)
-print("Showing plot")
+plt.plot(flowrate)
 plt.show()
