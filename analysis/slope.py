@@ -4,8 +4,6 @@ import numpy as np
 # Formula is X'*y / X'*X, where each row of X is [1,i]
 # We implement an optimized version here, which we will
 # translate to C++ for embedded use
-# Thus we have avoided numpy functions in order to see the
-# complexity and implementation of the algorithm more clearly
 def linreg(y):
   n = y.shape[0]
   # Build [1 x]'*[1 x]
@@ -22,10 +20,10 @@ def linreg(y):
   a[0,1] = a[0,1] / -det
   a[1,0] = a[0,1] # We know these are the same
   # Build [1 x]'*y
-  b = np.empty(2)
-  for i in range(n):
-    b[0] += y[i]
-    b[1] += i*y[i]
+  b = np.zeros(2)
+  b[0] = y.sum()
+  x = np.arange(n)
+  b[1] = x.dot(y)
   # Calculate slope and offset
   offset = a[0,0]*b[0] + a[1,0]*b[1]
   slope = a[0,1]*b[0] + a[1,1]*b[1]
