@@ -15,11 +15,10 @@
 #include "sdios.h"
 #include <Adafruit_MAX31865.h>
 
-Adafruit_MAX31865 rtd1 = Adafruit_MAX31865(A4);
-Adafruit_MAX31865 rtd2 = Adafruit_MAX31865(A5);
+Adafruit_MAX31865 upper_rtd = Adafruit_MAX31865(A5);
+Adafruit_MAX31865 lower_rtd = Adafruit_MAX31865(A4);
+Adafruit_MAX31865 heater_rtd = Adafruit_MAX31865(A3);
 
-#define RREF 430.0
-#define RNOMINAL 100.0
 
 ArduinoOutStream cout(Serial);
 
@@ -58,26 +57,36 @@ String newfile( String fname, String suffix=".csv" ){
 // Stores samples and relative time.
 // Adapt this datatype to your measurement needs.
 class sample{
-  private:
-  float channel1;
-  float channel2;
-  DateTime t;
-
   public:
-  sample( Adafruit_MAX31865 r1, Adafruit_MAX31865 r2 ){
+  float upper, lower, heater;
+  DateTime t;
+  
+  sample( const sample &a ){
+    upper = a.upper;
+    lower = a.lower;
+    heater = a.heater;
+    t = a.t;
+  }
+  sample( Adafruit_MAX31865 &rtd1, Adafruit_MAX31865 &rtd2){
     t = rtc_ds.now();
-    r1.readRTD();
-    r2.readRTD();
-    channel1 = r1.temperature(RNOMINAL, RREF);
-    channel2 = r2.temperature(RNOMINAL, RREF);
+    upper = rtd1.temperature();
+    lower = rtd2.temperature();
+    heater = 0;
+  }
+  sample( Adafruit_MAX31865 &rtd1, Adafruit_MAX31865 &rtd2,
+          Adafruit_MAX31865 &rtd3){
+    t = rtc_ds.now();
+    upper = rtd1.temperature();
+    lower = rtd2.temperature();
+    heater = rtd3.temperature();
   }
   sample( size_t oversample ){
     t = rtc_ds.now();
-    channel1 = 0;
-    channel2 = 0;
+    upper = 0;
+    lower = 0;
     for( auto i = 0; i < oversample; ++i ){
-      channel1 += analogRead(A0);
-      channel2 += analogRead(A1);
+      upper += analogRead(A0);
+      lower += analogRead(A1);
     }
   }
   sample( void ){
@@ -85,22 +94,15 @@ class sample{
   }
   void print( ostream &stream){
     stream << t.text() << ", ";
-    stream << setw(6) << channel1 << ", ";
-    stream << setw(6) << channel2 << "\r\n";
+    stream << setw(6) << upper << ", ";
+    stream << setw(6) << lower << ", ";
+    stream << setw(6) << heater << "\r\n";
   }
   // Print the header for a csv
   void header( ofstream &stream ){
-    stream << setw(6) << "A0" << ',';
-    stream << setw(6) << "A1" << '\n';
-  }
-  float channel(int num){
-    if( num == 1 )
-      return channel1;
-    else
-      return channel2;
-  }
-  DateTime time(void){
-    return t;
+    stream << setw(6) << "Upper Probe" << ',';
+    stream << setw(6) << "Lower Probe" << ',';
+    stream << setw(6) << "Heater Probe" << '\n';
   }
 };
 
@@ -240,8 +242,10 @@ void setup()
   sapfile.close();
   cout << "Success"<<endl;
 
-  rtd1.begin(MAX31865_4WIRE);  // set to 2WIRE or 4WIRE as necessary
-  rtd2.begin(MAX31865_4WIRE);  // set to 2WIRE or 4WIRE as necessary
+  // set to 2WIRE or 4WIRE as necessary
+  upper_rtd.begin(MAX31865_4WIRE);
+  lower_rtd.begin(MAX31865_4WIRE);
+  heater_rtd.begin(MAX31865_4WIRE);
   Serial.println("\n ** Setup Complete ** ");
   
   sleep_cycle();
@@ -251,8 +255,8 @@ float upper_baseline, lower_baseline;
 float upper_peak, lower_peak, sapflow;
 void loop() 
 {
-  sample s = sample(rtd1, rtd2); // Sample RTDs
-  s.print(cout);
+  sample s = sample(upper_rtd, lower_rtd, heater_rtd); // Sample RTDs
+  s.print(cout); // Print to serial output
   d.append(s);  // Log to SD card
   if ((millis()-event_time) < 60000) {
     switch(measuring_state){
@@ -262,8 +266,8 @@ void loop()
         // Sample for 3 seconds before heating
         event_time += 3000;
         measuring_state = heating;
-        upper_baseline = s.channel(1);
-        lower_baseline = s.channel(2);
+        upper_baseline = s.upper;
+        lower_baseline = s.lower;
         break;
       case heating:
         digitalWrite(HEATER, HIGH);
@@ -284,12 +288,12 @@ void loop()
       default:
         // Make sure we're done logging
         d.flush();
-        upper_peak = s.channel(1);
-        lower_peak = s.channel(2);
+        upper_peak = s.upper;
+        lower_peak = s.lower;
         sapflow = log((upper_peak-upper_baseline)/(lower_peak-lower_baseline));
         // Write the sapflow to the file.
         sapfile = ofstream(filename.c_str(), ios::out | ios::app);
-        sapfile << s.time().text() << ", ";
+        sapfile << s.t.text() << ", ";
         sapfile << upper_baseline << ", ";
         sapfile << lower_baseline << ", ";
         sapfile << upper_peak << ", ";
