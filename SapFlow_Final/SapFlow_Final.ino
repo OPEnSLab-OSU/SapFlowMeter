@@ -6,7 +6,12 @@
 #define ALARM_PIN 12
 #define HEATER 11
 
-#define DEBUG 1
+/* Debug modes:
+ *  0 is normal deployment
+ *  1 is RTD test
+ *  2 skips the sleep
+ */
+#define DEBUG 0
 
 #include <OPEnS_RTC.h>
 #include <LowPower.h>
@@ -58,7 +63,41 @@ String newfile( String fname, String suffix=".csv" ){
   }
   return temp;
 }
+//-----------------------------------------------------------------
+char weight_buf[20];
+// Gets the weight from the scale
+char * read_weight( char * buffer, int len ){
+  // Clear the buffer in case someone was messing with the cable
+  int n = Serial1.available();
+  while( Serial1.available() > len ){
+    Serial1.readBytes(buffer, len);
+  }
+  if( Serial1.available() ){
+    Serial1.readBytes(buffer, Serial1.available());
+  }
+  
+  // Now request the weight
+  Serial1.print("P\r\n");
+  len = 1 + Serial1.readBytesUntil('\n', buffer, len-1);
+  buffer[len] = 0;  // Null-terminate the string
+  int start_index, value_length, i;
+  // Filter out spaces and linefeed
+  for( i = 0; buffer[i]; ++i){
+    if( buffer[i] >= '0' )
+      break;
+  }
+  start_index = i;
+  for( ; buffer[i]; ++i){
+    if( buffer[i] < '.' )
+      break;
+  }
+  value_length = i - start_index;
 
+  memmove(buffer, buffer+start_index, value_length);
+  buffer[value_length] = 0; // null terminate
+  return( buffer );
+}
+//------------------------------------------------------------------------------
 // Stores samples and relative time.
 // Adapt this datatype to your measurement needs.
 class sample{
@@ -71,6 +110,8 @@ class sample{
     lower = a.lower;
     heater = a.heater;
     t = a.t;
+  }
+  sample( void ){ // Empty constructor
   }
   sample( Adafruit_MAX31865 &rtd1, Adafruit_MAX31865 &rtd2){
     t = rtc_ds.now();
@@ -94,20 +135,17 @@ class sample{
       lower += analogRead(A1);
     }
   }
-  sample( void ){
-    sample( 1 );
-  }
   void print( ostream &stream){
     stream << t.text() << ", ";
     stream << setw(6) << upper << ", ";
     stream << setw(6) << lower << ", ";
-    stream << setw(6) << heater << "\r\n";
+    stream << setw(6) << heater << endl;
   }
   // Print the header for a csv
   void header( ofstream &stream ){
     stream << setw(6) << "Upper Probe" << ',';
     stream << setw(6) << "Lower Probe" << ',';
-    stream << setw(6) << "Heater Probe" << '\n';
+    stream << setw(6) << "Heater Probe" << endl;
   }
 };
 
@@ -161,42 +199,46 @@ void alarmISR() {
 }
 
 void feather_sleep( void ){
-  while(!digitalRead(ALARM_PIN)){
-    Serial.print("Waiting on alarm pin...");
-    delay(10);
+  if( DEBUG == 2 ){
+    Serial.println("Skipping sleep");
+  } else {
+    while(!digitalRead(ALARM_PIN)){
+      Serial.print("Waiting on alarm pin...");
+      delay(10);
+    }
+    // Low-level so we can wake from sleep
+    // I think calling this twice clears the interrupt.
+    attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
+    attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
+    // Prep for sleep
+    Serial.end();
+    USBDevice.detach();
+    // Disable SPI to save power
+    pinMode(24, INPUT);
+    pinMode(23, INPUT);
+    pinMode(chipSelect, INPUT);
+    // Turn off power rails
+    digitalWrite(5, HIGH); digitalWrite(6, LOW);
+    digitalWrite(LED_BUILTIN, LOW);
+    // Sleep
+    LowPower.standby();
+  
+    // Prep to resume
+    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(5, LOW); digitalWrite(6, HIGH);
+    pinMode(24, OUTPUT);
+    pinMode(23, OUTPUT);
+    pinMode(chipSelect, OUTPUT);
+    USBDevice.attach();
+    Serial.begin(115200);
+    sd.begin(chipSelect, SD_SCK_MHZ(1));
   }
-  // Low-level so we can wake from sleep
-  // I think calling this twice clears the interrupt.
-  attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
-  // Prep for sleep
-  Serial.end();
-  USBDevice.detach();
-  // Disable SPI to save power
-  pinMode(24, INPUT);
-  pinMode(23, INPUT);
-  pinMode(chipSelect, INPUT);
-  // Turn off power rails
-  digitalWrite(5, HIGH); digitalWrite(6, LOW);
-  digitalWrite(LED_BUILTIN, LOW);
-  // Sleep
-  LowPower.standby();
-
-  // Prep to resume
-  digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(5, LOW); digitalWrite(6, HIGH);
-  pinMode(24, OUTPUT);
-  pinMode(23, OUTPUT);
-  pinMode(chipSelect, OUTPUT);
-  USBDevice.attach();
-  Serial.begin(115200);
-  sd.begin(chipSelect, SD_SCK_MHZ(1));
 }
 
 // Sleep until the time is a round multiple of the minute inteval.
 // Produces unexpected bevahior for non-factors of 60 (7, 8, 9, 11, etc)
 void sleep_cycle( int interval = 5 ){
-  if( DEBUG == 1 ){
+  if( DEBUG != 0 ){
      Serial.println("Skipping sleep");
   } else {
     Serial.println("Sleeping until nearest multiple of 5 minutes");
@@ -226,6 +268,8 @@ void setup()
   Serial.begin(115200);
   Serial.println("Starting setup");
 
+  Serial1.begin(9600);  // For interfacing with RS232 on scale
+
   // RTC Timer settings here
   if (! rtc_ds.begin()) {
     Serial.println("Couldn't find RTC");
@@ -247,7 +291,7 @@ if( DEBUG != 1){
   cout << "Creating new file " << filename.c_str() << "...";
   // Write the headers for the file
   sapfile = ofstream(filename.c_str(), ios::out);
-  sapfile << "Date, Upper baseline, Lower baseline, Upper peak, Lower peak, calculated sapflow" << endl;
+  sapfile << "Date, Upper baseline, Lower baseline, Upper peak, Lower peak, calculated sapflow, weight" << endl;
   sapfile.close();
   cout << "Success"<<endl;
 }
@@ -261,12 +305,13 @@ if( DEBUG != 1){
   sleep_cycle();
 }
 
-float upper_baseline, lower_baseline;
-float upper_peak, lower_peak, sapflow;
+float sapflow;
+sample baseline, peak;
 void loop() 
 {
   sample s = sample(upper_rtd, lower_rtd, heater_rtd); // Sample RTDs
-  s.print(cout); // Print to serial output
+  if(DEBUG != 2)
+    s.print(cout); // Print to serial output
   if (DEBUG != 1){ // DEBUG = 1 is an RTD test
     d.append(s);  // Log to SD card
     if ((millis()-event_time) < 60000) {
@@ -277,8 +322,6 @@ void loop()
           // Sample for 3 seconds before heating
           event_time += 3000;
           measuring_state = heating;
-          upper_baseline = s.upper;
-          lower_baseline = s.lower;
           break;
         case heating:
           digitalWrite(HEATER, HIGH);
@@ -289,6 +332,7 @@ void loop()
           measuring_state = cooling;
           break;
         case cooling:
+          baseline = s;
           digitalWrite(HEATER, LOW);
           Serial.print("Heater Off at ");
           Serial.println(rtc_ds.now().text());
@@ -297,19 +341,20 @@ void loop()
           measuring_state = sleep;
           break;
         default:
+          peak = s;
           // Make sure we're done logging
           d.flush();
-          upper_peak = s.upper;
-          lower_peak = s.lower;
-          sapflow = log((upper_peak-upper_baseline)/(lower_peak-lower_baseline));
+          read_weight(weight_buf, 20);  // Read the weight from the scale
+          sapflow = log((peak.upper-baseline.upper)/(peak.lower - baseline.lower));
           // Write the sapflow to the file.
           sapfile = ofstream(filename.c_str(), ios::out | ios::app);
           sapfile << s.t.text() << ", ";
-          sapfile << upper_baseline << ", ";
-          sapfile << lower_baseline << ", ";
-          sapfile << upper_peak << ", ";
-          sapfile << lower_peak << ", ";
-          sapfile << sapflow << endl;
+          sapfile << baseline.upper << ", ";
+          sapfile << baseline.lower << ", ";
+          sapfile << peak.upper << ", ";
+          sapfile << peak.lower << ", ";
+          sapfile << sapflow << ", ";
+          sapfile << weight_buf << endl;
           sapfile.close();
           //Sleep until the next 5-minute interval
           sleep_cycle( 5 );
