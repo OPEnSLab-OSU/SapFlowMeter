@@ -6,6 +6,8 @@
 #define ALARM_PIN 12
 #define HEATER 11
 
+#define DEBUG 1
+
 #include <OPEnS_RTC.h>
 #include <LowPower.h>
 #include <sdios.h> //for ArduinoOutStream
@@ -18,6 +20,9 @@
 Adafruit_MAX31865 upper_rtd = Adafruit_MAX31865(A5);
 Adafruit_MAX31865 lower_rtd = Adafruit_MAX31865(A4);
 Adafruit_MAX31865 heater_rtd = Adafruit_MAX31865(A3);
+
+#define Rnom 100
+#define Rref 430
 
 
 ArduinoOutStream cout(Serial);
@@ -69,16 +74,16 @@ class sample{
   }
   sample( Adafruit_MAX31865 &rtd1, Adafruit_MAX31865 &rtd2){
     t = rtc_ds.now();
-    upper = rtd1.temperature();
-    lower = rtd2.temperature();
+    upper = rtd1.temperature(Rnom, Rref);
+    lower = rtd2.temperature(Rnom, Rref);
     heater = 0;
   }
   sample( Adafruit_MAX31865 &rtd1, Adafruit_MAX31865 &rtd2,
           Adafruit_MAX31865 &rtd3){
     t = rtc_ds.now();
-    upper = rtd1.temperature();
-    lower = rtd2.temperature();
-    heater = rtd3.temperature();
+    upper = rtd1.temperature(Rnom, Rref);
+    lower = rtd2.temperature(Rnom, Rref);
+    heater = rtd3.temperature(Rnom, Rref);
   }
   sample( size_t oversample ){
     t = rtc_ds.now();
@@ -191,16 +196,20 @@ void feather_sleep( void ){
 // Sleep until the time is a round multiple of the minute inteval.
 // Produces unexpected bevahior for non-factors of 60 (7, 8, 9, 11, etc)
 void sleep_cycle( int interval = 5 ){
-  Serial.println("Sleeping until nearest multiple of 5 minutes");
-  DateTime t = rtc_ds.now();
-  t = t + TimeSpan( interval * 60 );
-  uint8_t minutes = interval*(t.minute()/interval);
-  rtc_ds.setAlarm(ALM2_MATCH_MINUTES, minutes, 0, 0);
-  Serial.print("Alarm set to ");
-  t = rtc_ds.getAlarm(2);
-  Serial.println(t.text());
-  delay(1000);
-  feather_sleep();
+  if( DEBUG == 1 ){
+     Serial.println("Skipping sleep");
+  } else {
+    Serial.println("Sleeping until nearest multiple of 5 minutes");
+    DateTime t = rtc_ds.now();
+    t = t + TimeSpan( interval * 60 );
+    uint8_t minutes = interval*(t.minute()/interval);
+    rtc_ds.setAlarm(ALM2_MATCH_MINUTES, minutes, 0, 0);
+    Serial.print("Alarm set to ");
+    t = rtc_ds.getAlarm(2);
+    Serial.println(t.text());
+    delay(1000);
+    feather_sleep();
+  }
 }
 
 void setup() 
@@ -232,7 +241,7 @@ void setup()
   if (!sd.begin(chipSelect, SD_SCK_MHZ(1))) {
     sd.initErrorHalt();
   }
-
+if( DEBUG != 1){
   // Make sure we're not overwriting an existing file.
   filename = newfile("sapflow");
   cout << "Creating new file " << filename.c_str() << "...";
@@ -241,6 +250,7 @@ void setup()
   sapfile << "Date, Upper baseline, Lower baseline, Upper peak, Lower peak, calculated sapflow" << endl;
   sapfile.close();
   cout << "Success"<<endl;
+}
 
   // set to 2WIRE or 4WIRE as necessary
   upper_rtd.begin(MAX31865_4WIRE);
@@ -257,52 +267,54 @@ void loop()
 {
   sample s = sample(upper_rtd, lower_rtd, heater_rtd); // Sample RTDs
   s.print(cout); // Print to serial output
-  d.append(s);  // Log to SD card
-  if ((millis()-event_time) < 60000) {
-    switch(measuring_state){
-      case wake:
-        Serial.print("Awoke at ");
-        Serial.println(rtc_ds.now().text());
-        // Sample for 3 seconds before heating
-        event_time += 3000;
-        measuring_state = heating;
-        upper_baseline = s.upper;
-        lower_baseline = s.lower;
-        break;
-      case heating:
-        digitalWrite(HEATER, HIGH);
-        Serial.print("Heater On at ");
-        Serial.println(rtc_ds.now().text());
-        //Set the alarm for heating time
-        event_time += 6000;
-        measuring_state = cooling;
-        break;
-      case cooling:
-        digitalWrite(HEATER, LOW);
-        Serial.print("Heater Off at ");
-        Serial.println(rtc_ds.now().text());
-        //set the alarm for cooling time
-        event_time += 40000;
-        measuring_state = sleep;
-        break;
-      default:
-        // Make sure we're done logging
-        d.flush();
-        upper_peak = s.upper;
-        lower_peak = s.lower;
-        sapflow = log((upper_peak-upper_baseline)/(lower_peak-lower_baseline));
-        // Write the sapflow to the file.
-        sapfile = ofstream(filename.c_str(), ios::out | ios::app);
-        sapfile << s.t.text() << ", ";
-        sapfile << upper_baseline << ", ";
-        sapfile << lower_baseline << ", ";
-        sapfile << upper_peak << ", ";
-        sapfile << lower_peak << ", ";
-        sapfile << sapflow << endl;
-        sapfile.close();
-        //Sleep until the next 5-minute interval
-        sleep_cycle( 5 );
-        measuring_state = wake;
+  if (DEBUG != 1){ // DEBUG = 1 is an RTD test
+    d.append(s);  // Log to SD card
+    if ((millis()-event_time) < 60000) {
+      switch(measuring_state){
+        case wake:
+          Serial.print("Awoke at ");
+          Serial.println(rtc_ds.now().text());
+          // Sample for 3 seconds before heating
+          event_time += 3000;
+          measuring_state = heating;
+          upper_baseline = s.upper;
+          lower_baseline = s.lower;
+          break;
+        case heating:
+          digitalWrite(HEATER, HIGH);
+          Serial.print("Heater On at ");
+          Serial.println(rtc_ds.now().text());
+          //Set the alarm for heating time
+          event_time += 6000;
+          measuring_state = cooling;
+          break;
+        case cooling:
+          digitalWrite(HEATER, LOW);
+          Serial.print("Heater Off at ");
+          Serial.println(rtc_ds.now().text());
+          //set the alarm for cooling time
+          event_time += 40000;
+          measuring_state = sleep;
+          break;
+        default:
+          // Make sure we're done logging
+          d.flush();
+          upper_peak = s.upper;
+          lower_peak = s.lower;
+          sapflow = log((upper_peak-upper_baseline)/(lower_peak-lower_baseline));
+          // Write the sapflow to the file.
+          sapfile = ofstream(filename.c_str(), ios::out | ios::app);
+          sapfile << s.t.text() << ", ";
+          sapfile << upper_baseline << ", ";
+          sapfile << lower_baseline << ", ";
+          sapfile << upper_peak << ", ";
+          sapfile << lower_peak << ", ";
+          sapfile << sapflow << endl;
+          sapfile.close();
+          //Sleep until the next 5-minute interval
+          sleep_cycle( 5 );
+          measuring_state = wake;
+      }
     }
   }
 }
