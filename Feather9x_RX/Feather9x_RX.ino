@@ -6,8 +6,12 @@
 // level messaging abilities.
 // It is designed to work with the other example Feather9x_TX
 
+#include <RHReliableDatagram.h>
 #include <SPI.h>
 #include <RH_RF95.h>
+
+#define CLIENT_ADDRESS 1
+#define SERVER_ADDRESS 2
 
 /* for Feather32u4 RFM9x
 #define RFM95_CS 8
@@ -70,6 +74,9 @@
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
+// Class to manage message delivery and receipt, using the driver declared above
+RHReliableDatagram manager(rf95, SERVER_ADDRESS);
+
 // Blinky on receipt
 #define LED 13
 
@@ -93,7 +100,7 @@ void setup()
   digitalWrite(RFM95_RST, HIGH);
   delay(10);
 
-  while (!rf95.init()) {
+  while (!manager.init()) {
     Serial.println("LoRa radio init failed");
     Serial.println("Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info");
     while (1);
@@ -115,33 +122,31 @@ void setup()
   rf95.setTxPower(23, false);
 }
 
+uint8_t data[] = "And hello back to you";
+// Dont put this on the stack:
+uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+
 void loop()
 {
-  if (rf95.available())
+  if (manager.available())
   {
-    // Should be a message for us now
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+    // Wait for a message addressed to us from the client
     uint8_t len = sizeof(buf);
-
-    if (rf95.recv(buf, &len))
+    uint8_t from;
+    if (manager.recvfromAck(buf, &len, &from))
     {
       digitalWrite(LED, HIGH);
-      RH_RF95::printBuffer("Received: ", buf, len);
-      Serial.print("Got: ");
+      Serial.print("got request from : 0x");
+      Serial.print(from, HEX);
+      Serial.print(": ");
       Serial.println((char*)buf);
-       Serial.print("RSSI: ");
+      Serial.print("RSSI: ");
       Serial.println(rf95.lastRssi(), DEC);
 
-      // Send a reply
-      uint8_t data[] = "And hello back to you";
-      rf95.send(data, sizeof(data));
-      rf95.waitPacketSent();
-      Serial.println("Sent a reply");
+      // Send a reply back to the originator client
+      if (!manager.sendtoWait(data, sizeof(data), from))
+        Serial.println("sendtoWait failed");
       digitalWrite(LED, LOW);
-    }
-    else
-    {
-      Serial.println("Receive failed");
     }
   }
 }

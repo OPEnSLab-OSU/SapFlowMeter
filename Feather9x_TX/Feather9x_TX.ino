@@ -6,8 +6,12 @@
 // level messaging abilities.
 // It is designed to work with the other example Feather9x_RX
 
+#include <RHReliableDatagram.h>
 #include <SPI.h>
 #include <RH_RF95.h>
+
+#define CLIENT_ADDRESS 1
+#define SERVER_ADDRESS 2
 
 /* for feather32u4 
 #define RFM95_CS 8
@@ -69,6 +73,9 @@
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
+// Class to manage message delivery and receipt, using the driver declared above
+RHReliableDatagram manager(rf95, CLIENT_ADDRESS);
+
 void setup() 
 {
   pinMode(RFM95_RST, OUTPUT);
@@ -89,7 +96,7 @@ void setup()
   digitalWrite(RFM95_RST, HIGH);
   delay(10);
 
-  while (!rf95.init()) {
+  while (!manager.init()) {
     Serial.println("LoRa radio init failed");
     Serial.println("Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info");
     while (1);
@@ -116,6 +123,11 @@ int16_t packetnum = 0;  // packet counter, we increment per xmission
 void loop()
 {
   delay(1000); // Wait 1 second between transmits, could also 'sleep' here!
+  
+  // Receive buffer
+  uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+  uint8_t len = sizeof(buf);
+  
   Serial.println("Transmitting..."); // Send a message to rf95_server
   
   char radiopacket[20] = "Hello World #      ";
@@ -123,36 +135,29 @@ void loop()
   Serial.print("Sending "); Serial.println(radiopacket);
   radiopacket[19] = 0;
   
-  Serial.println("Sending...");
-  delay(10);
-  rf95.send((uint8_t *)radiopacket, 20);
 
-  Serial.println("Waiting for packet to complete..."); 
-  delay(10);
-  rf95.waitPacketSent();
-  // Now wait for a reply
-  uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-  uint8_t len = sizeof(buf);
 
-  Serial.println("Waiting for reply...");
-  if (rf95.waitAvailableTimeout(1000))
-  { 
-    // Should be a reply message for us now   
-    if (rf95.recv(buf, &len))
-   {
-      Serial.print("Got reply: ");
+    // Send a message to manager_server
+  if (manager.sendtoWait((uint8_t *)radiopacket, 20, SERVER_ADDRESS))
+  {
+    // Now wait for a reply from the server
+    uint8_t from;   
+    if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
+    {
+      Serial.print("got reply from : 0x");
+      Serial.print(from, HEX);
+      Serial.print(": ");
       Serial.println((char*)buf);
       Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);    
+      Serial.println(rf95.lastRssi(), DEC);
     }
     else
     {
-      Serial.println("Receive failed");
+      Serial.println("No reply, is server running?");
     }
   }
   else
-  {
-    Serial.println("No reply, is there a listener around?");
-  }
+    Serial.println("sendtoWait failed");
+  delay(500);
 
 }
