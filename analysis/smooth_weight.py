@@ -4,7 +4,7 @@ import numpy as np
 import scipy.signal as sig
 
 # Load the naive sapflow data
-condensed = pd.read_csv('../data/sapflow(02).csv', index_col=0,
+condensed = pd.read_csv('../data/sapflow(04).csv', index_col=0,
   parse_dates = [0], infer_datetime_format = True, usecols=[0, 6] )
 
 print("Resolving discontinuity")
@@ -23,21 +23,14 @@ a = sig.sosfiltfilt(f, condensed[' weight'], axis=0)
 condensed['smoothed weight'] = a
 
 print("Taking Derivative")
-b = -1 * sig.savgol_filter(a, 31, 1, 1, axis=0)
+b = -1 * 3600. / 7. * sig.savgol_filter(a, 31, 1, 1, axis=0)
 
 print("Printing graph")
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 fig, ax1 = plt.subplots()
 ax1.set_xlabel('Date')
-ax1.set_ylabel('Weight (kg)')
-ax1.plot(condensed)
-print("Second axis")
-yellow = (1,.8,0)
-ax2 = ax1.twinx()
-ax2.set_facecolor(yellow)
-condensed['water used']=b
-ax2.set_ylabel('water used')
-ax2.plot(condensed.index, b, color=yellow)
+ax1.set_ylabel('gravimetric')
+ax1.plot(condensed.index, b)
 fig.tight_layout()
 plt.show()
