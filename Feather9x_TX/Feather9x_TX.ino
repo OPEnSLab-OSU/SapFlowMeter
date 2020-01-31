@@ -1,14 +1,10 @@
 // Feather9x_TX
-// -*- mode: C++ -*-
-// Example sketch showing how to create a simple messaging client (transmitter)
-// with the RH_RF95 class. RH_RF95 class does not provide for addressing or
-// reliability, so you should only use RH_RF95 if you do not need the higher
-// level messaging abilities.
-// It is designed to work with the other example Feather9x_RX
+// Designed to work with  Feather9x_RX
 
 #include <RHReliableDatagram.h>
 #include <SPI.h>
 #include <RH_RF95.h>
+#include <ArduinoJson.h>
 
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
@@ -122,7 +118,7 @@ int16_t packetnum = 0;  // packet counter, we increment per xmission
 
 void loop()
 {
-  delay(1000); // Wait 1 second between transmits, could also 'sleep' here!
+  delay(5000); // Wait 1 second between transmits, could also 'sleep' here!
   
   // Receive buffer
   uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
@@ -130,15 +126,21 @@ void loop()
   
   Serial.println("Transmitting..."); // Send a message to rf95_server
   
-  char radiopacket[20] = "Hello World #      ";
-  itoa(packetnum++, radiopacket+13, 10);
+
+  const int capacity=JSON_OBJECT_SIZE(5);
+  StaticJsonDocument<capacity>doc;
+  doc["flow"].set("11.3");
+  doc["weight"].set("7.8");
+  doc["temp"].set("27.5");
+  doc["time"].set("23:23");
+  doc["id"].set("1");
+  char radiopacket[70];
+  serializeJson(doc,radiopacket);
   Serial.print("Sending "); Serial.println(radiopacket);
-  radiopacket[19] = 0;
+  radiopacket[69] = 0;
   
-
-
-    // Send a message to manager_server
-  if (manager.sendtoWait((uint8_t *)radiopacket, 20, SERVER_ADDRESS))
+  // Send a message to manager_server
+  if (manager.sendtoWait((uint8_t *)radiopacket, 70, SERVER_ADDRESS))
   {
     // Now wait for a reply from the server
     uint8_t from;   

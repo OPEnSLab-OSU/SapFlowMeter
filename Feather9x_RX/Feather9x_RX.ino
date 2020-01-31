@@ -1,14 +1,11 @@
 // Feather9x_RX
-// -*- mode: C++ -*-
-// Example sketch showing how to create a simple messaging client (receiver)
-// with the RH_RF95 class. RH_RF95 class does not provide for addressing or
-// reliability, so you should only use RH_RF95 if you do not need the higher
-// level messaging abilities.
-// It is designed to work with the other example Feather9x_TX
+// Designed to work with Feather9x_TX
 
 #include <RHReliableDatagram.h>
 #include <SPI.h>
 #include <RH_RF95.h>
+#include <Ethernet.h>
+#include <ArduinoJson.h>
 
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
@@ -80,6 +77,35 @@ RHReliableDatagram manager(rf95, SERVER_ADDRESS);
 // Blinky on receipt
 #define LED 13
 
+// Enter a MAC address for your controller below.
+// Newer Ethernet shields have a MAC address printed on a sticker on the shield
+//byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}
+//This address is registered on Resnet (dorm)
+//byte mac[] = {0x1A, 0x41, 0x3E, 0x1F, 0x18, 0xF5};
+//This address is registered on OSU access
+byte mac[] = {0xC6, 0x1b, 0xa6, 0xac, 0xd7, 0x03};
+
+// if you don't want to use DNS (and reduce your sketch size)
+// use the numeric IP instead of the name for the server:
+//IPAddress server(74,125,232,128);  // numeric IP for Google (no DNS)
+//char server[] = "wifitest.adafruit.com";    // name address for Google (using DNS)
+char server[] = "web.engr.oregonstate.edu";    // name address for Google (using DNS)
+
+// Set the static IP address to use if the DHCP fails to assign
+IPAddress ip(128, 193, 200, 177);
+//IPAddress myDns(192, 168, 0, 1);
+IPAddress myDns(128, 193, 15, 12);
+
+// Initialize the Ethernet client library
+// with the IP address and port of the server
+// that you want to connect to (port 80 is default for HTTP):
+EthernetClient client;
+
+// Variables to measure the speed
+unsigned long beginMicros, endMicros;
+unsigned long byteCount = 0;
+bool printWebData = true;  // set to false for better speed measurement
+
 void setup()
 {
   pinMode(LED, OUTPUT);
@@ -148,5 +174,69 @@ void loop()
         Serial.println("sendtoWait failed");
       digitalWrite(LED, LOW);
     }
+     // You can use Ethernet.init(pin) to configure the CS pin
+  Ethernet.init(10);  // Most Arduino shields [including Feather M0]
+  pinMode(RFM95_RST, INPUT_PULLUP);
+
+  Serial.println("Initialize Ethernet with DHCP:");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed to configure Ethernet using DHCP");
+    // Check for Ethernet hardware present
+    if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+      Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+      while (true) {
+        delay(1); // do nothing, no point running without Ethernet hardware
+      }
+    }
+    if (Ethernet.linkStatus() == LinkOFF) {
+      Serial.println("Ethernet cable is not connected.");
+    }
+    // try to congifure using IP address instead of DHCP:
+    Ethernet.begin(mac, ip, myDns);
+  } else {
+    Serial.print("  DHCP assigned IP ");
+    Serial.println(Ethernet.localIP());
+  }
+    delay(1000);
+  Serial.print("connecting to ");
+  Serial.print(server);
+  Serial.println("...");
+  // if you get a connection, report back via serial:
+  if (client.connect(server, 80)) {
+    Serial.print("connected to ");
+    Serial.println(client.remoteIP());
+    // Make a HTTP request:
+    char input[] = "{\"flow\":\"11.3\",\"weight\":\"7.8\",\"temp\":\"27.5\",\"time\":\"15:30\",\"id\":\"15\"}";
+    const int capacity = JSON_OBJECT_SIZE(5);
+    StaticJsonDocument<capacity> doc;
+    DeserializationError err = deserializeJson(doc, (char*)buf);
+    if (err) {
+      Serial.print(F("deserializeJson() failed with code "));
+      Serial.println(err.c_str());
+    }
+
+    const char * flow = doc["flow"];
+    const char * weight = doc["weight"];
+    const char * temp = doc["temp"];
+    const char * time1 = doc["time"];
+    const char * id = doc["id"];
+  
+  char url[100];
+   sprintf(url, "GET /~veselyv/new.php?flow=%s&weight=%s&temp=%s&time=%s&id=%s HTTP/1.1",flow,weight,temp,time1,id);
+   client.println(url);
+   Serial.print("Sent url: ");
+   Serial.println(url);
+   client.println("Host: web.engr.oregonstate.edu");
+   client.println("Connection: close");
+   client.println();
+   
+  } else {
+    // if you didn't get a connection to the server:
+    Serial.println("connection failed");
+  }
+  delay(1000);
+  client.stop();
+  pinMode(RFM95_RST, OUTPUT);
+  digitalWrite(RFM95_RST, HIGH);
   }
 }
