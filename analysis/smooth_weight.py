@@ -4,8 +4,8 @@ import numpy as np
 import scipy.signal as sig
 
 # Load the naive sapflow data
-condensed = pd.read_csv('../data/sapflow(04).csv', index_col=0,
-  parse_dates = [0], infer_datetime_format = True, usecols=[0, 6] )
+condensed = pd.read_csv('jan6.csv', index_col=0,
+  parse_dates = [0], infer_datetime_format = True )
 
 print("Resolving discontinuity")
 w = condensed[' weight']
@@ -24,6 +24,8 @@ condensed['smoothed weight'] = a
 
 print("Taking Derivative")
 b = -1 * 3600. / 7. * sig.savgol_filter(a, 31, 1, 1, axis=0)
+condensed['gravimetric'] = b
+condensed.to_csv('pretty.csv')
 
 print("Printing graph")
 from pandas.plotting import register_matplotlib_converters
