@@ -14,13 +14,6 @@ void feather_sleep( void ){
     Serial.print("Waiting on alarm pin...");
     delay(10);
   }
-  // Low-level so we can wake from sleep
-  // Maybe a synchronization issue?
-  attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
-  // Prep for sleep
-  Serial.end();
-  USBDevice.detach();
   // Disable SPI to save power
   pinMode(SPI_SCK, INPUT);
   pinMode(SPI_MOSI, INPUT);
@@ -29,18 +22,31 @@ void feather_sleep( void ){
   digitalWrite(EN_3v3, HIGH); 
   digitalWrite(EN_5v, LOW);
   digitalWrite(STATUS_LED, LOW);
+#if 0
+  // Prep for sleep
+  Serial.end();
+  USBDevice.detach();
+  // Low-level so we can wake from sleep
+  // Maybe a synchronization issue?
+  attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
   // Sleep
   LowPower.standby();
 
   // Prep to resume
   USBDevice.attach();
+  Serial.begin(115200);
+#else
+  // Pretend to sleep, so the serial terminal doesn't exit
+  // This draws a lot of power, so don't do this in production
+  while(digitalRead(ALARM_PIN));
+#endif
   digitalWrite(STATUS_LED, HIGH);
   digitalWrite(EN_3v3, LOW); 
   digitalWrite(EN_5v, HIGH);
   pinMode(SPI_SCK, OUTPUT);
   pinMode(SPI_MOSI, OUTPUT);
   pinMode(SD_CS, OUTPUT);
-  Serial.begin(115200);
   sd.begin(SD_CS, SD_SCK_MHZ(1));
 }
 
@@ -80,7 +86,7 @@ int schedule(struct pt *pt)
   {
     sleep = true;
     PT_YIELD(pt); // Wait for all threads to prep for sleep
-    sleep_cycle(1); // FIXME: Testing sleep at 1 minute
+    sleep_cycle(5); 
     sleep = false;
     Serial.print("Awoke at ");
     Serial.println(rtc_ds.now().text());

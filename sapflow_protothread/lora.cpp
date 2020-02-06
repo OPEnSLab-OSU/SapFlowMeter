@@ -7,7 +7,6 @@
 #include <RH_RF95.h>
 #include <ArduinoJson.h>
 #include <ftoa.h> // for float to string conversion
-#include "pinout.h"
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -17,6 +16,7 @@ static RHReliableDatagram manager(rf95, CLIENT_ADDRESS);
 
 void lora_init(void) 
 {
+  digitalWrite(RFM95_CS, LOW); // enable LoRa
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
@@ -47,6 +47,7 @@ void lora_init(void)
   // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
   // you can set transmitter powers from 5 to 23 dBm:
   rf95.setTxPower(23, false);
+  digitalWrite(RFM95_CS, HIGH); // disable LoRa
 }
 
 static int16_t packetnum = 0;  // packet counter, we increment per xmission
@@ -58,10 +59,16 @@ void build_msg(float flow, float weight, float temp, char * time)
 {
   const int capacity=JSON_OBJECT_SIZE(5);
   StaticJsonDocument<capacity>doc;
-  doc["flow"].set(ftoa(flow, radiopacket));
-  doc["weight"].set(ftoa(weight, radiopacket));
-  doc["temp"].set(ftoa(temp, radiopacket));
-  doc["time"].set(time);
+  char str1[15];
+  char str2[15];
+  char str3[15];
+  ftoa(flow, str1);
+  ftoa(weight, str2);
+  ftoa(temp, str3);
+  doc["flow"].set(str1);
+  doc["weight"].set(str2);
+  doc["temp"].set(str3);
+  doc["time"].set("now"); // having trouble copying time string
   doc["id"].set("1");
   packet_len = serializeJson(doc,radiopacket);
   Serial.print("Sending "); Serial.println(radiopacket);
@@ -71,6 +78,7 @@ void build_msg(float flow, float weight, float temp, char * time)
 
 void send_msg( void )
 {
+  digitalWrite(RFM95_CS, LOW); // enable LoRa
   Serial.println("Transmitting..."); // Send a message to rf95_server
   // Send a message to manager_server
   if (manager.sendtoWait((uint8_t *)radiopacket, packet_len, SERVER_ADDRESS))
@@ -94,4 +102,5 @@ void send_msg( void )
   else
     Serial.println("sendtoWait failed");
 
+  digitalWrite(RFM95_CS, HIGH); // disable LoRa
 }

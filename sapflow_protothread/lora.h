@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pinout.h"
+
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
 

@@ -57,9 +57,15 @@ void build_msg(float flow, float weight, float temp, char * time)
 {
   const int capacity=JSON_OBJECT_SIZE(5);
   StaticJsonDocument<capacity>doc;
-  doc["flow"].set(ftoa(flow, radiopacket));
-  doc["weight"].set(ftoa(weight, radiopacket));
-  doc["temp"].set(ftoa(temp, radiopacket));
+  char str1[15];
+  char str2[15];
+  char str3[15];
+  ftoa(flow, str1);
+  ftoa(weight, str2);
+  ftoa(temp, str3);
+  doc["flow"].set(str1);
+  doc["weight"].set(str2);
+  doc["temp"].set(str3);
   doc["time"].set(time);
   doc["id"].set("1");
   packet_len = serializeJson(doc,radiopacket);

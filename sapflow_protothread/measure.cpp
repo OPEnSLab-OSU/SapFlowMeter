@@ -86,13 +86,13 @@ int baseline(struct pt *pt)
   do{
     PT_WAIT_UNTIL(pt, sample_trigger);
     PT_WAIT_WHILE(pt, sample_trigger);
-    Serial.println("Baseline thd");
     reference.upper += latest.upper;
     reference.lower += latest.lower;
     ++i;
   }while(millis()<(pt)->t);
   reference.upper /= i;
   reference.lower /= i;
+  cout<<"Baseline: "<<reference.upper<<", "<<reference.lower<<endl;
   PT_END(pt);
 }
 
@@ -109,22 +109,24 @@ int delta(struct pt *pt)
   do{
     PT_WAIT_UNTIL(pt, sample_trigger);
     PT_WAIT_WHILE(pt, sample_trigger);
-    Serial.println("Delta thd");
     // Ratio of upper delta over lower delta
-    flow += (latest.upper - reference.upper) / 
-    (latest.lower - reference.lower);
+    float udelt = latest.upper - reference.upper;
+    float ldelt = latest.lower - reference.lower;
+    cout << "Delta: " << udelt <<", " << ldelt << endl;
+    flow += udelt / ldelt;
     ++i;
   }while(millis()<(pt)->t);
   flow /= i;
-  flow = log(flow) * 3600.;
+  flow = log(flow) * (3600.*2e-6/7e-3);
   // Write the sapflow to the file.
   ofstream sapfile = ofstream("demo.csv", ios::out | ios::app);
   char * time = rtc_ds.now().text();
-  sapfile << time << ", ";
-  sapfile << reference.upper << ", ";
-  sapfile << reference.lower << ", ";
-  sapfile << flow << ", ";
-  sapfile << read_weight() << endl;
+  cout << time << ", "
+  << reference.upper << ", "
+  << reference.lower << ", "
+  << flow << ", " << endl;
+  sapfile << time << ", "<< reference.upper << ", "
+  << reference.lower << ", "<< flow << ", "<< read_weight() << endl;
   sapfile.close();
   lora_init();
   build_msg(flow, 7.6, reference.upper, time);

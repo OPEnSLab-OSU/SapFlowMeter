@@ -22,7 +22,7 @@ void loop()
 {
   delay(5000); // Wait 1 second between transmits, could also 'sleep' here!
   
-  build_msg(11.3, 7.8, 27.5, "23:23");
+  build_msg(11.3, 7.8, 27.5, "5:01");
   send_msg();
 
 }

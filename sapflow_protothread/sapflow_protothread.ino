@@ -6,6 +6,8 @@
 #include "measure.h"
 
 void setup() {
+  pinMode(HEATER, OUTPUT);
+  digitalWrite(HEATER, LOW);
   Serial.begin(115200);
   while(!Serial);
   Serial.println("Serial connected");
@@ -22,6 +24,8 @@ void setup() {
   digitalWrite(EN_5v, HIGH);
   pinMode(I2C_SCL, INPUT_PULLUP);
   pinMode(I2C_SDA, INPUT_PULLUP);
+  pinMode(RFM95_CS, OUTPUT);
+  digitalWrite(RFM95_CS, HIGH); // disable LoRa until we're ready to use
   schedule();
   schedule();
 }
