@@ -32,10 +32,23 @@ int measure(struct pt *pt)
   PT_YIELD(pt);
   while(1)
   {
-    static ofstream logfile = ofstream("temperature_log.csv", 
-                                     ios::out | ios::app );
+    Serial.print("Skipping log file...");
+    static ofstream logfile = ofstream("demo_log.csv", ios::out | ios::app );
+    Serial.println("Done");
     while(1)
-    {
+    {      
+      // Wait for next sample trigger
+      PT_YIELD_UNTIL(pt, (sample_trigger || sleep));
+      sample_trigger = false;
+      // Check if we prepare for sleep
+      if( sleep )
+      {
+        logfile.close();
+        Serial.println("Sleeping");
+        PT_YIELD(pt); // sleep occurs here
+        break;
+      }
+      Serial.println("Sampling...");
       // Get the latest temperature
       latest.upper = upper_rtd.temperature(Rnom, Rref);
       latest.lower = lower_rtd.temperature(Rnom, Rref);
@@ -50,21 +63,10 @@ int measure(struct pt *pt)
       Serial.print(latest.heater);
       Serial.print(" Time: ");
       Serial.println(t.text());
-      
       logfile << t.text() << ", ";
       logfile << setw(6) << latest.upper << ", ";
       logfile << setw(6) << latest.lower << ", ";
       logfile << setw(6) << latest.heater << endl;
-      // Wait for next sample trigger
-      PT_YIELD_UNTIL(pt, (sample_trigger || sleep));
-      sample_trigger = false;
-      // Check if we prepare for sleep
-      if( sleep )
-      {
-        logfile.close();
-        PT_YIELD(pt); // sleep occurs here
-        break;
-      }
     }
   }
   PT_END(pt);

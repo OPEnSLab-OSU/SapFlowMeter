@@ -1,9 +1,8 @@
 #pragma once
 
-#include <sdios.h> //for ArduinoOutStream
 #include <SPI.h>
-#include "SdFat.h"
-#include "sdios.h"
+#include <SdFat.h>
+#include <sdios.h> //for ArduinoOutStream
 #include "pinout.h"
 
 static ArduinoOutStream cout(Serial);

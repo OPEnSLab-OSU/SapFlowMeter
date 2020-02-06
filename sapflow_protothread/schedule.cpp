@@ -80,7 +80,7 @@ int schedule(struct pt *pt)
   {
     sleep = true;
     PT_YIELD(pt); // Wait for all threads to prep for sleep
-    sleep_cycle(1); // CIXME: Testing sleep at 1 minute
+    sleep_cycle(1); // FIXME: Testing sleep at 1 minute
     sleep = false;
     Serial.print("Awoke at ");
     Serial.println(rtc_ds.now().text());
