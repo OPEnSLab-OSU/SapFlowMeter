@@ -18,6 +18,9 @@ enum pinout{
 //  UPPER_CS = A5, // Upper RTD
 //  LOWER_CS = A4, // Lower RTD
 //  HEATER_CS = A3, // Heater RTD
+  RFM95_CS = 8, // used for LoRa
+  RFM95_RST = 4,// used for LoRa
+  RFM95_INT = 3,// used for LoRa
 };
 
 // Other includes that everyone should have

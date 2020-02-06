@@ -1,4 +1,5 @@
 #include "measure.h"
+#include "lora.h"
 
 static bool sample_trigger;
 
@@ -118,11 +119,16 @@ int delta(struct pt *pt)
   flow = log(flow) * 3600.;
   // Write the sapflow to the file.
   ofstream sapfile = ofstream("demo.csv", ios::out | ios::app);
-  sapfile << rtc_ds.now().text() << ", ";
+  char * time = rtc_ds.now().text();
+  sapfile << time << ", ";
   sapfile << reference.upper << ", ";
   sapfile << reference.lower << ", ";
   sapfile << flow << ", ";
   sapfile << read_weight() << endl;
   sapfile.close();
+  lora_init();
+  build_msg(flow, 7.6, reference.upper, time);
+  send_msg();
+  
   PT_END(pt);
 }
