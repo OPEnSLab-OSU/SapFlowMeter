@@ -51,6 +51,7 @@ void lora_init(void)
 static int16_t packetnum = 0;  // packet counter, we increment per xmission
 
 static char radiopacket[RH_RF95_MAX_MESSAGE_LEN];
+static uint8_t packet_len; // This makes me nervous - how long IS the max message length?
 
 void build_msg(float flow, float weight, float temp, char * time)
 {
@@ -61,9 +62,9 @@ void build_msg(float flow, float weight, float temp, char * time)
   doc["temp"].set(ftoa(temp, radiopacket));
   doc["time"].set(time);
   doc["id"].set("1");
-  size_t len = serializeJson(doc,radiopacket);
+  packet_len = serializeJson(doc,radiopacket);
   Serial.print("Sending "); Serial.println(radiopacket);
-  radiopacket[len] = 0;
+  radiopacket[packet_len] = 0;
 }
 
 
@@ -71,11 +72,11 @@ void send_msg( void )
 {
   Serial.println("Transmitting..."); // Send a message to rf95_server
   // Send a message to manager_server
-  if (manager.sendtoWait((uint8_t *)radiopacket, len, SERVER_ADDRESS))
+  if (manager.sendtoWait((uint8_t *)radiopacket, packet_len, SERVER_ADDRESS))
   {
     // Now wait for a reply from the server
     uint8_t from;   
-    if (manager.recvfromAckTimeout((uint8_t *)radiopacket, &len, 2000, &from))
+    if (manager.recvfromAckTimeout((uint8_t *)radiopacket, &packet_len, 2000, &from))
     {
       Serial.print("got reply from : 0x");
       Serial.print(from, HEX);
