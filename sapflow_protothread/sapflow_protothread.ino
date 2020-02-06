@@ -27,8 +27,8 @@ void setup() {
 }
 
 void loop() {
-  //Check each thread by priority
-  schedule();
+  //Check each thread
   measure();
+  schedule();
   sample_timer();
 }

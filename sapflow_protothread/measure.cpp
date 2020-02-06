@@ -12,7 +12,9 @@ int sample_timer(struct pt *pt)
   while(1)
   {
     sample_trigger = true;
-    Serial.println("Trigger");
+    // Serial.println("Trigger");
+    PT_YIELD(pt); // Give everyone a chance to see the trigger
+    sample_trigger = false; // Clear the trigger
     PT_TIMER_DELAY(pt,1000); // Sample every 1000ms
   }
   PT_END(pt);
@@ -32,14 +34,14 @@ int measure(struct pt *pt)
   PT_YIELD(pt);
   while(1)
   {
-    Serial.print("Skipping log file...");
-    static ofstream logfile = ofstream("demo_log.csv", ios::out | ios::app );
+    Serial.print("Opening log file...");
+    static ofstream logfile = ofstream("demo_log.csv", 
+                                       ios::out | ios::app );
     Serial.println("Done");
     while(1)
     {      
       // Wait for next sample trigger
       PT_YIELD_UNTIL(pt, (sample_trigger || sleep));
-      sample_trigger = false;
       // Check if we prepare for sleep
       if( sleep )
       {
@@ -48,7 +50,8 @@ int measure(struct pt *pt)
         PT_YIELD(pt); // sleep occurs here
         break;
       }
-      Serial.println("Sampling...");
+      PT_YIELD(pt);
+      //Serial.println("Sampling...");
       // Get the latest temperature
       latest.upper = upper_rtd.temperature(Rnom, Rref);
       latest.lower = lower_rtd.temperature(Rnom, Rref);
@@ -79,19 +82,16 @@ int baseline(struct pt *pt)
   Serial.print("Initializing baseline thread... ");
   static int i = 0;
   reference = latest;
-  pinMode(ALARM_PIN, INPUT_PULLUP);
-  DateTime t = rtc_ds.now();
-  t = t + TimeSpan( 10 ); // average over 10 seconds
-  rtc_ds.setAlarm(t);
+  (pt)->t = millis() + 10000; // loop for 10 seconds
   Serial.println("Done");
-  while(digitalRead(ALARM_PIN))
-  {
-    PT_YIELD_UNTIL(pt, sample_trigger);
+  do{
+    PT_WAIT_UNTIL(pt, sample_trigger);
+    PT_WAIT_WHILE(pt, sample_trigger);
     Serial.println("Baseline thd");
     reference.upper += latest.upper;
     reference.lower += latest.lower;
     ++i;
-  }
+  }while(millis()<(pt)->t);
   reference.upper /= i;
   reference.lower /= i;
   PT_END(pt);
@@ -105,20 +105,17 @@ int delta(struct pt *pt)
   Serial.print("Initializing delta thread... ");
   static int i = 0;
   static float flow = 0;
-  pinMode(ALARM_PIN, INPUT_PULLUP);
-  DateTime t = rtc_ds.now();
-  t = t + TimeSpan( 40 ); // Average over 40 seconds
-  rtc_ds.setAlarm(t);
+  (pt)->t = millis() + 40000; // loop for 40 seconds
   Serial.println("Done");
-  while(digitalRead(ALARM_PIN))
-  {
-    PT_YIELD_UNTIL(pt, sample_trigger);
+  do{
+    PT_WAIT_UNTIL(pt, sample_trigger);
+    PT_WAIT_WHILE(pt, sample_trigger);
     Serial.println("Delta thd");
     // Ratio of upper delta over lower delta
     flow += (latest.upper - reference.upper) / 
     (latest.lower - reference.lower);
     ++i;
-  }
+  }while(millis()<(pt)->t);
   flow /= i;
   flow = log(flow) * 3600.;
   // Write the sapflow to the file.
