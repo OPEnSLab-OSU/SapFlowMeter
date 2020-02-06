@@ -41,13 +41,14 @@ int measure(struct pt *pt)
     while(1)
     {      
       // Wait for next sample trigger
-      PT_YIELD_UNTIL(pt, (sample_trigger || sleep));
+      PT_WAIT_UNTIL(pt, (sample_trigger || sleep));
       // Check if we prepare for sleep
       if( sleep )
       {
+        // This seems to never be called.
         logfile.close();
         Serial.println("Sleeping");
-        PT_YIELD(pt); // sleep occurs here
+        PT_WAIT_WHILE(pt, sleep); // sleep occurs here
         break;
       }
       PT_YIELD(pt);
@@ -58,18 +59,15 @@ int measure(struct pt *pt)
       latest.heater = heater_rtd.temperature(Rnom, Rref);
       // Save calculated sapflow
       DateTime t = rtc_ds.now();
-      Serial.print("Upper: ");
-      Serial.print(latest.upper);
-      Serial.print(" Lower: ");
-      Serial.print(latest.lower);
-      Serial.print(" Heater: ");
-      Serial.print(latest.heater);
-      Serial.print(" Time: ");
-      Serial.println(t.text());
       logfile << t.text() << ", ";
-      logfile << setw(6) << latest.upper << ", ";
-      logfile << setw(6) << latest.lower << ", ";
-      logfile << setw(6) << latest.heater << endl;
+      logfile << setw(6) << latest.upper << ", "
+      << setw(6) << latest.lower << ", "
+      << setw(6) << latest.heater << endl;
+      logfile.flush();  // Force the SD card to save
+      // Print to Serial terminal
+      cout << "Upper: " << latest.upper << " Lower: " 
+      << latest.lower << " Heater: " <<latest.heater 
+      << " Time: " << t.text() << endl;
     }
   }
   PT_END(pt);
