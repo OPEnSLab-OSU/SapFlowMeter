@@ -87,6 +87,7 @@ int baseline(struct pt *pt)
   while(digitalRead(ALARM_PIN))
   {
     PT_YIELD_UNTIL(pt, sample_trigger);
+    Serial.println("Baseline thd");
     reference.upper += latest.upper;
     reference.lower += latest.lower;
     ++i;
@@ -112,9 +113,10 @@ int delta(struct pt *pt)
   while(digitalRead(ALARM_PIN))
   {
     PT_YIELD_UNTIL(pt, sample_trigger);
+    Serial.println("Delta thd");
     // Ratio of upper delta over lower delta
     flow += (latest.upper - reference.upper) / 
-    (latest.lower / reference.lower);
+    (latest.lower - reference.lower);
     ++i;
   }
   flow /= i;

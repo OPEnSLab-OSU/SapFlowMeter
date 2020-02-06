@@ -84,7 +84,7 @@ int schedule(struct pt *pt)
     sleep = false;
     Serial.print("Awoke at ");
     Serial.println(rtc_ds.now().text());
-    PT_WAIT_THREAD(pt, baseline);
+    PT_WAIT_THREAD(pt, baseline());
     digitalWrite(HEATER, HIGH);
     Serial.print("Heater On at ");
     Serial.println(rtc_ds.now().text());
@@ -94,7 +94,7 @@ int schedule(struct pt *pt)
     Serial.println(rtc_ds.now().text());
     PT_TIMER_DELAY(pt,60000);
     Serial.println("Temperature probably reached plateau");
-    PT_WAIT_THREAD(pt, delta);
+    PT_WAIT_THREAD(pt, delta());
     Serial.println("Finished logging");
   }
   PT_END(pt);

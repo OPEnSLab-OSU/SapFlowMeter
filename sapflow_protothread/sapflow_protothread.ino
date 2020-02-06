@@ -18,6 +18,8 @@ void setup() {
   sleep = false;
   pinMode(EN_3v3, OUTPUT);
   digitalWrite(EN_3v3, LOW);
+  pinMode(EN_5v, OUTPUT);
+  digitalWrite(EN_5v, HIGH);
   pinMode(I2C_SCL, INPUT_PULLUP);
   pinMode(I2C_SDA, INPUT_PULLUP);
   schedule();
@@ -26,7 +28,7 @@ void setup() {
 
 void loop() {
   //Check each thread by priority
-  //schedule();
+  schedule();
   measure();
   sample_timer();
 }
