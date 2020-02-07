@@ -22,7 +22,7 @@ void feather_sleep( void ){
   digitalWrite(EN_3v3, HIGH); 
   digitalWrite(EN_5v, LOW);
   digitalWrite(STATUS_LED, LOW);
-#if 0
+#if 1
   // Prep for sleep
   Serial.end();
   USBDevice.detach();

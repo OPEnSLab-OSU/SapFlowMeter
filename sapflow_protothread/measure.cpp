@@ -52,7 +52,7 @@ int measure(struct pt *pt)
         PT_WAIT_WHILE(pt, sleep); // sleep occurs here
         break;
       }
-      PT_YIELD(pt);
+      PT_WAIT_WHILE(pt, sample_trigger);
       //Serial.println("Sampling...");
       // Get the latest temperature
       latest.upper = upper_rtd.temperature(Rnom, Rref);
@@ -79,16 +79,17 @@ int baseline(struct pt *pt)
 {
   PT_BEGIN(pt);
   Serial.print("Initializing baseline thread... ");
-  static int i = 0;
-  reference = latest;
-  (pt)->t = millis() + 10000; // loop for 10 seconds
+  // Declare persistant variable for this thread
+  static int i;
+  // Initialize the baseline (reference) temperature
+  reference.upper = 0;
+  reference.lower = 0;
   Serial.println("Done");
-  do{
+  for(i = 0; i < 10; ++i){
     PT_WAIT_UNTIL(pt, sample_trigger);
     PT_WAIT_WHILE(pt, sample_trigger);
     reference.upper += latest.upper;
     reference.lower += latest.lower;
-    ++i;
   }while(millis()<(pt)->t);
   reference.upper /= i;
   reference.lower /= i;
@@ -102,11 +103,13 @@ int delta(struct pt *pt)
 {
   PT_BEGIN(pt);
   Serial.print("Initializing delta thread... ");
-  static int i = 0;
-  static float flow = 0;
-  (pt)->t = millis() + 40000; // loop for 40 seconds
+  // Declare persistent variables for this thread
+  static int i;
+  static float flow;
+  // Initialize the flow value
+  flow = 0;
   Serial.println("Done");
-  do{
+  for(i = 0; i < 40; ++i ){
     PT_WAIT_UNTIL(pt, sample_trigger);
     PT_WAIT_WHILE(pt, sample_trigger);
     // Ratio of upper delta over lower delta
@@ -114,7 +117,6 @@ int delta(struct pt *pt)
     float ldelt = latest.lower - reference.lower;
     cout << "Delta: " << udelt <<", " << ldelt << endl;
     flow += udelt / ldelt;
-    ++i;
   }while(millis()<(pt)->t);
   flow /= i;
   flow = log(flow) * (3600.*2e-6/7e-3);
