@@ -123,15 +123,17 @@ int delta(struct pt *pt)
   // Write the sapflow to the file.
   ofstream sapfile = ofstream("demo.csv", ios::out | ios::app);
   char * time = rtc_ds.now().text();
+  char * weight = read_weight();
   cout << time << ", "
   << reference.upper << ", "
   << reference.lower << ", "
   << flow << ", " << endl;
   sapfile << time << ", "<< reference.upper << ", "
-  << reference.lower << ", "<< flow << ", "<< read_weight() << endl;
+  << reference.lower << ", "<< flow << ", "<< weight
+  << endl;
   sapfile.close();
   lora_init();
-  build_msg(flow, 7.6, reference.upper, time);
+  build_msg(flow, weight, reference.upper, time);
   send_msg();
   
   PT_END(pt);

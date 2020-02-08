@@ -10,6 +10,6 @@
 
 void lora_init(void);
 
-void build_msg(float flow, float weight, float temp, char * time);
+void build_msg(float flow, char * weight, float temp, char * time);
 
 void send_msg( void );

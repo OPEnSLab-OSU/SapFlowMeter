@@ -9,7 +9,7 @@ void setup() {
   pinMode(HEATER, OUTPUT);
   digitalWrite(HEATER, LOW);
   Serial.begin(115200);
-  while(!Serial);
+//  while(!Serial);
   Serial.println("Serial connected");
   //Initialize the Threads
   PT_INIT(&sched_thd);

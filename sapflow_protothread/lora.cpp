@@ -55,18 +55,16 @@ static int16_t packetnum = 0;  // packet counter, we increment per xmission
 static char radiopacket[RH_RF95_MAX_MESSAGE_LEN];
 static uint8_t packet_len; // This makes me nervous - how long IS the max message length?
 
-void build_msg(float flow, float weight, float temp, char * time)
+void build_msg(float flow, char * weight, float temp, char * time)
 {
   const int capacity=JSON_OBJECT_SIZE(5);
   StaticJsonDocument<capacity>doc;
   char str1[15];
-  char str2[15];
   char str3[15];
   ftoa(flow, str1);
-  ftoa(weight, str2);
   ftoa(temp, str3);
   doc["flow"].set(str1);
-  doc["weight"].set(str2);
+  doc["weight"].set("0");
   doc["temp"].set(str3);
   doc["time"].set("now"); // having trouble copying time string
   doc["id"].set("1");

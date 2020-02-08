@@ -2,6 +2,7 @@
 
 #include "pinout.h"
 #include <string.h> // for memmove
+#include <Arduino.h> // for Serial1
 
 static char weight_buf[20];
 

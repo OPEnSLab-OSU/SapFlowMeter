@@ -3,7 +3,7 @@
 // Gets the weight from the scale
 char * read_weight( char * buffer, int len ){
   // Clear the buffer in case someone was messing with the cable
- /* int n = Serial1.available();
+  int n = Serial1.available();
   while( Serial1.available() > len ){
     Serial1.readBytes(buffer, len);
   }
@@ -29,6 +29,6 @@ char * read_weight( char * buffer, int len ){
   value_length = i - start_index;
 
   memmove(buffer, buffer+start_index, value_length);
-  buffer[value_length] = 0; // null terminate*/
+  buffer[value_length] = 0; // null terminate
   return( buffer );
 }
