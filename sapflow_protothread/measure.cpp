@@ -1,10 +1,6 @@
 #include "measure.h"
 #include "lora.h"
 
-static bool sample_trigger;
-
-#define Rnom 100.0
-#define Rref 430.0
 
 int sample_timer(struct pt *pt)
 {

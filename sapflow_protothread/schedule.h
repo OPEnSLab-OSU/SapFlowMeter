@@ -4,11 +4,12 @@
 #include <LowPower.h>
 #include "pinout.h"
 #include "measure.h"
-static struct pt sched_thd;
 
-static RTC_DS3231 rtc_ds;
+static struct pt sched_thd;///< Protothread control structure for measure()
 
-static bool sleep; // Global flag to prep for sleep
+static RTC_DS3231 rtc_ds; ///< Instance of our real-time clock
+
+static bool sleep; ///< Global flag to prep for sleep
 
 /** @file */
 
@@ -53,5 +54,7 @@ This is the schedule:
 3. Wait for the peak of the heat to reach the upper and lower probes.
 4. Measure the sap flow
 5. Sleep until next measurement cycle
+@param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
+@returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
 int schedule(struct pt *pt = &sched_thd);

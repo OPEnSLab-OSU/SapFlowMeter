@@ -2,10 +2,14 @@
 
 #include "pinout.h"
 
-#define CLIENT_ADDRESS 1
-#define SERVER_ADDRESS 2
+#define CLIENT_ADDRESS 1 ///< Our LoRa address
+#define SERVER_ADDRESS 2 ///< The LoRa address of the base station
 
-// Change to 434.0 or other frequency, must match RX's freq!
+/** Radio frequency (in MHz). 
+
+Make sure this matches the radio you're communicating with.
+Also, be careful to stay in the ISM band so you aren't transmitting
+on a restricted channel without a license. */
 #define RF95_FREQ 915.0
 
 /** @file */
@@ -24,7 +28,7 @@ Builds a JSON string to send over LoRa.
 Builds a JSON string containing sapflow, weight, temperature, time, and tree ID.
 The string is stored in a global variable to be read by send_msg()
 
-@param flow The calculates sapflow
+@param flow The calculated sapflow
 @param weight The text received from the scale. Use "0" if scale is not connected.
 @param temp The baseline temperature of the tree
 @param time The date and time from the Real-Time Clock

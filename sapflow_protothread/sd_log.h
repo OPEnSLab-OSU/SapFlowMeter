@@ -7,7 +7,8 @@
 
 /** @file */
 
-/** Allows use of streams to print to Serial via cout */
+/** Allows use of streams to print to Serial via cout 
+@returns an ArduinoOutStream. Please don't use the return value. */
 static ArduinoOutStream cout(Serial);
 
 static SdFat sd; ///< File system object.
