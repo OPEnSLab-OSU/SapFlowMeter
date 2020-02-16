@@ -22,7 +22,7 @@ void feather_sleep( void ){
   digitalWrite(EN_3v3, HIGH); 
   digitalWrite(EN_5v, LOW);
   digitalWrite(STATUS_LED, LOW);
-#if 1
+#if 0
   // Prep for sleep
   Serial.end();
   USBDevice.detach();
@@ -84,10 +84,6 @@ int schedule(struct pt *pt)
   Serial.println("Done");
   while (1)
   {
-    sleep = true;
-    PT_YIELD(pt); // Wait for all threads to prep for sleep
-    sleep_cycle(5); 
-    sleep = false;
     Serial.print("Awoke at ");
     Serial.println(rtc_ds.now().text());
     PT_WAIT_THREAD(pt, baseline());
@@ -98,10 +94,14 @@ int schedule(struct pt *pt)
     digitalWrite(HEATER, LOW);
     Serial.print("Heater Off at ");
     Serial.println(rtc_ds.now().text());
-    PT_TIMER_DELAY(pt,60000);
+    PT_TIMER_DELAY(pt,5);
     Serial.println("Temperature probably reached plateau");
     PT_WAIT_THREAD(pt, delta());
     Serial.println("Finished logging");
+    sleep = true;
+    PT_YIELD(pt); // Wait for all threads to prep for sleep
+    sleep_cycle(1); 
+    sleep = false;
   }
   PT_END(pt);
 }

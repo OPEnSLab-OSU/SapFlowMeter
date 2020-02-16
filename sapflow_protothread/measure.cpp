@@ -1,6 +1,7 @@
 #include "measure.h"
 #include "lora.h"
 
+float maxtemp; ///< Used to store the max heater temperature
 
 int sample_timer(struct pt *pt)
 {
@@ -102,10 +103,11 @@ int delta(struct pt *pt)
   // Declare persistent variables for this thread
   static int i;
   static float flow;
+  maxtemp = latest.heater; // This should be the heater peak temperature
   // Initialize the flow value
   flow = 0;
   Serial.println("Done");
-  for(i = 0; i < 40; ++i ){
+  for(i = 0; i < 5; ++i ){
     PT_WAIT_UNTIL(pt, sample_trigger);
     PT_WAIT_WHILE(pt, sample_trigger);
     // Ratio of upper delta over lower delta
@@ -129,7 +131,7 @@ int delta(struct pt *pt)
   << endl;
   sapfile.close();
   lora_init();
-  build_msg(flow, weight, reference.upper, time);
+  build_msg(flow, weight, reference.upper, maxtemp);
   send_msg();
   
   PT_END(pt);

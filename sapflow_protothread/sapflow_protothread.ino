@@ -22,16 +22,20 @@ void setup() {
   PT_INIT(&baseline_thd);
   PT_INIT(&delta_thd);
   sleep = false;
+  
   pinMode(EN_3v3, OUTPUT);
-  digitalWrite(EN_3v3, LOW);
   pinMode(EN_5v, OUTPUT);
-  digitalWrite(EN_5v, HIGH);
   pinMode(I2C_SCL, INPUT_PULLUP);
   pinMode(I2C_SDA, INPUT_PULLUP);
   pinMode(RFM95_CS, OUTPUT);
   digitalWrite(RFM95_CS, HIGH); // disable LoRa until we're ready to use
-  schedule(); // sleep first, sample on wakeup
-  schedule();
+  digitalWrite(STATUS_LED, HIGH);
+  digitalWrite(EN_3v3, LOW); 
+  digitalWrite(EN_5v, HIGH);
+  pinMode(SPI_SCK, OUTPUT);
+  pinMode(SPI_MOSI, OUTPUT);
+  pinMode(SD_CS, OUTPUT);
+  sd.begin(SD_CS, SD_SCK_MHZ(1));
 }
 
 /** Implicit loop
