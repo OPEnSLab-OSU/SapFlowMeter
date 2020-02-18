@@ -31,42 +31,39 @@ int measure(struct pt *pt)
   Serial.println("Done");
   PT_YIELD(pt);
   while(1)
-  {
-    Serial.print("Opening log file...");
-    static ofstream logfile = ofstream("demo_log.csv", 
-                                       ios::out | ios::app );
-    Serial.println("Done");
-    while(1)
-    {      
-      // Wait for next sample trigger
-      PT_WAIT_UNTIL(pt, (sample_trigger || sleep));
-      // Check if we prepare for sleep
-      if( sleep )
-      {
-        // This seems to never be called.
-        logfile.close();
-        Serial.println("Sleeping");
-        PT_WAIT_WHILE(pt, sleep); // sleep occurs here
-        break;
-      }
-      PT_WAIT_WHILE(pt, sample_trigger);
-      //Serial.println("Sampling...");
-      // Get the latest temperature
-      latest.upper = upper_rtd.temperature(Rnom, Rref);
-      latest.lower = lower_rtd.temperature(Rnom, Rref);
-      latest.heater = heater_rtd.temperature(Rnom, Rref);
-      // Save calculated sapflow
-      DateTime t = rtc_ds.now();
-      logfile << t.text() << ", ";
-      logfile << setw(6) << latest.upper << ", "
-      << setw(6) << latest.lower << ", "
-      << setw(6) << latest.heater << endl;
-      logfile.flush();  // Force the SD card to save
-      // Print to Serial terminal
-      cout << "Upper: " << latest.upper << " Lower: " 
-      << latest.lower << " Heater: " <<latest.heater 
-      << " Time: " << t.text() << endl;
+  {      
+    // Wait for next sample trigger
+    PT_WAIT_UNTIL(pt, (sample_trigger || sleep));
+    // Check if we prepare for sleep
+    if( sleep )
+    {
+      // This seems to never be called.
+      Serial.println("Sleeping");
+      PT_WAIT_WHILE(pt, sleep); // sleep occurs here
+      break;
     }
+    PT_WAIT_WHILE(pt, sample_trigger);
+    //Serial.println("Sampling...");
+    // Get the latest temperature
+    latest.upper = upper_rtd.temperature(Rnom, Rref);
+    latest.lower = lower_rtd.temperature(Rnom, Rref);
+    latest.heater = heater_rtd.temperature(Rnom, Rref);
+    DateTime t = rtc_ds.now();
+    // Print to Serial terminal
+    cout << "Upper: " << latest.upper << " Lower: " 
+    << latest.lower << " Heater: " <<latest.heater 
+    << " Time: " << t.text() << endl;
+    // Save calculated sapflow
+    cout<<"Logfile...";
+    ofstream logfile = ofstream("demo_log.csv", 
+                                     ios::out | ios::app );
+    cout<<"opened...";
+    logfile << t.text() << ", ";
+    logfile << setw(6) << latest.upper << ", "
+    << setw(6) << latest.lower << ", "
+    << setw(6) << latest.heater << endl;
+    logfile.close(); // Ensure the file is closed
+    cout<<"done"<<endl;
   }
   PT_END(pt);
 }
