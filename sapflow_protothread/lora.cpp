@@ -57,6 +57,7 @@ static uint8_t packet_len; // This makes me nervous - how long IS the max messag
 
 void build_msg(float flow, char * weight, float temp, float maxtemp)
 {
+  Serial.print("Building message...");
   const int capacity=JSON_OBJECT_SIZE(10);
   StaticJsonDocument<capacity>doc;
   char str1[15];
@@ -74,7 +75,7 @@ void build_msg(float flow, char * weight, float temp, float maxtemp)
   doc["id"].set("0");
   doc["time"].set(tstring);
   packet_len = serializeJson(doc,radiopacket);
-  Serial.print("Sending "); Serial.println(radiopacket);
+  Serial.println(radiopacket);
   radiopacket[packet_len] = 0;
 }
 

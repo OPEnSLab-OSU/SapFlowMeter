@@ -115,11 +115,15 @@ int delta(struct pt *pt)
     float ldelt = latest.lower - reference.lower;
     cout << "Delta: " << udelt <<", " << ldelt << endl;
     flow += udelt / ldelt;
-  }while(millis()<(pt)->t);
+  };
+  cout<<"Finished measurements."<<endl;
   flow /= i;
   flow = log(flow) * (3600.*2e-6/7e-3);
+  cout<<"Flow is "<<flow<<endl;
   // Write the sapflow to the file.
+  cout<<"Opening logfile...";
   ofstream sapfile = ofstream("demo.csv", ios::out | ios::app);
+  cout<<"Done"<<endl;
   char * time = rtc_ds.now().text();
   char * weight = read_weight();
   cout << time << ", "
