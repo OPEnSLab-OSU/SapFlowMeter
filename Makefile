@@ -1,11 +1,19 @@
 board=adafruit:samd:adafruit_feather_m0
-sketch=sapflow_protothread
+sketch=debug
+bossac=/home/marshal/.arduino15/packages/arduino/tools/bossac/1.7.0-arduino3/bossac
+port=/dev/ttyACM0
 
-all:
+all: build flash
+
+build:
 	arduino-cli compile -b $(board) $(sketch)
 
 flash:
-	arduino-cli upload -p /dev/ttyACM0 -b $(board) $(sketch)
+	#FIXME: Open port and set baud rate to 1200 to start Arduino bootloader
+	$(bossac) --port=$(port) --force_usb_port=true -e -w -v -R $(sketch)/*bin
+
+monitor:
+	screen $(port)
 
 copy:
 	scp $(sketch)/*bin flip2:

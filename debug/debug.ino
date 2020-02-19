@@ -3,17 +3,21 @@
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  if(halt_location.read()){
-    halt_location.print();
-    halt_location.line++;
-  } else {
-    MARK();
-  }
-  halt_location.write();
+  while(!Serial);
+  halt_location.read();
+  halt_location.print();
+  Serial.println("Started watchdog example");
+  MARK();
+  halt_location.print();
+  delay(500);
+  int time = wdt.enable(3000);
+  Serial.print("Watchdog timer set to ");
+  Serial.println(time);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  halt_location.print();
-  delay(1000);
+  for( auto i = 0; ; ++i ){
+    delay(1000);
+    Serial.println(i);
+  }
 }
