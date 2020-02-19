@@ -1,7 +1,7 @@
 Sapflow Measurment Cycle          {#mainpage}
 ==================
 
-![Timing diagram for sapflow measurement](./timing.png)
+![Timing diagram for sapflow measurement](timing.png)
 
 **Baseline:** Measures the initial temperature at the upper and lower probe. See baseline() for details.
 
