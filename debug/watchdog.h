@@ -11,7 +11,7 @@ public:
 
     /** Enable the watchdog timer to reset the machine if it hangs
      * 
-     * @param maxPeriodMS The desired millisecond value. Powers of 2 from 8 to 8096.
+     * @param maxPeriodMS The desired millisecond value. Powers of 2 from 8 to 8k.
      * @returns The closest valid value
      */
     int enable(int maxPeriodMS = 0);

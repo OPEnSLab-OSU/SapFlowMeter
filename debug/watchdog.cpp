@@ -61,8 +61,7 @@ int WatchdogSAMD::enable(int maxPeriodMS) {
 #if defined(__SAMD51__)
     WDT->INTFLAG.bit.EW      = 1;    // Clear interrupt flag
     WDT->INTENSET.bit.EW     = 1;    // Enable early warning interrupt
-    WDT->CONFIG.bit.PER      = 0xB;  // Period = twice
-    WDT->CONFIG.bit.WINDOW    = 0xB;    // Max period
+    WDT->CONFIG.bit.PER      = bits+1;  // Period = twice
     WDT->EWCTRL.bit.EWOFFSET = bits;  // Set time of interrupt
     WDT->CTRLA.bit.WEN       = 0;    // Disable window mode
     while(WDT->SYNCBUSY.reg);        // Sync CTRL write
@@ -71,8 +70,7 @@ int WatchdogSAMD::enable(int maxPeriodMS) {
     while(WDT->SYNCBUSY.reg);
 #else
     WDT->INTENSET.bit.EW   = 1;      // Enable early warning interrupt
-    WDT->CONFIG.bit.PER    = 0xB;    // Period = twice
-    WDT->CONFIG.bit.WINDOW    = 0xB;    // Max period
+    WDT->CONFIG.bit.PER    = bits+1;    // Period = twice
     WDT->EWCTRL.bit.EWOFFSET = bits;  // Set time of interrupt
     WDT->CTRL.bit.WEN      = 0;      // Disable window mode
     while(WDT->STATUS.bit.SYNCBUSY); // Sync CTRL write

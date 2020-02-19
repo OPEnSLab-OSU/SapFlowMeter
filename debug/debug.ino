@@ -17,7 +17,7 @@ void setup() {
 
 void loop() {
   for( auto i = 0; ; ++i ){
-    delay(1000);
     Serial.println(i);
+    delay(1000);
   }
 }
