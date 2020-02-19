@@ -89,24 +89,26 @@ $(document).ready(function(){initNavTree('lora_8h_source.html',''); initResizabl
 <a href="lora_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#pragma once</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160; </div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="pinout_8h.html">pinout.h</a>&quot;</span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160; </div>
-<div class="line"><a name="l00005"></a><span class="lineno"><a class="line" href="lora_8h.html#ac4e0fb05b3ec3c8df22b642c2226ecc5">    5</a></span>&#160;<span class="preprocessor">#define CLIENT_ADDRESS 1 </span></div>
-<div class="line"><a name="l00006"></a><span class="lineno"><a class="line" href="lora_8h.html#aa6cecb8c404241c624e83aee8a3979d2">    6</a></span>&#160;<span class="preprocessor">#define SERVER_ADDRESS 2 </span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor"></span> </div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160; </div>
-<div class="line"><a name="l00013"></a><span class="lineno"><a class="line" href="lora_8h.html#a2240e28a2e7f70d896b1a46ea3c5ce39">   13</a></span>&#160;<span class="preprocessor">#define RF95_FREQ 915.0</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160; </div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="keywordtype">void</span> <a class="code" href="lora_8h.html#a5406703a916059feeaac0ce650e6ceb7">lora_init</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160; </div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="keywordtype">void</span> <a class="code" href="lora_8h.html#a089352c2289222c02d40868445328d6b">build_msg</a>(<span class="keywordtype">float</span> flow, <span class="keywordtype">char</span> * weight, <span class="keywordtype">float</span> temp, <span class="keywordtype">char</span> * time);</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160; </div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="keywordtype">void</span> <a class="code" href="lora_8h.html#a759190db192ee81162c88decd75d3a7d">send_msg</a>( <span class="keywordtype">void</span> );</div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="measure_8h.html">measure.h</a>&quot;</span> <span class="comment">// for rtc_ds.now().text()</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160; </div>
+<div class="line"><a name="l00006"></a><span class="lineno"><a class="line" href="lora_8h.html#ac4e0fb05b3ec3c8df22b642c2226ecc5">    6</a></span>&#160;<span class="preprocessor">#define CLIENT_ADDRESS 1 </span></div>
+<div class="line"><a name="l00007"></a><span class="lineno"><a class="line" href="lora_8h.html#aa6cecb8c404241c624e83aee8a3979d2">    7</a></span>&#160;<span class="preprocessor">#define SERVER_ADDRESS 2 </span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor"></span> </div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160; </div>
+<div class="line"><a name="l00014"></a><span class="lineno"><a class="line" href="lora_8h.html#a2240e28a2e7f70d896b1a46ea3c5ce39">   14</a></span>&#160;<span class="preprocessor">#define RF95_FREQ 915.0</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160; </div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="keywordtype">void</span> <a class="code" href="lora_8h.html#a5406703a916059feeaac0ce650e6ceb7">lora_init</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160; </div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="keywordtype">void</span> <a class="code" href="lora_8h.html#a081e4c64303e45009a39fd81bdf5eb7f">build_msg</a>(<span class="keywordtype">float</span> flow, <span class="keywordtype">char</span> * weight, <span class="keywordtype">float</span> temp, <span class="keywordtype">float</span> maxtemp);</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160; </div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="keywordtype">void</span> <a class="code" href="lora_8h.html#a759190db192ee81162c88decd75d3a7d">send_msg</a>( <span class="keywordtype">void</span> );</div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
-<div class="ttc" id="alora_8h_html_a759190db192ee81162c88decd75d3a7d"><div class="ttname"><a href="lora_8h.html#a759190db192ee81162c88decd75d3a7d">send_msg</a></div><div class="ttdeci">void send_msg(void)</div><div class="ttdoc">Sends a LoRa packet to the base station.</div><div class="ttdef"><b>Definition:</b> <a href="lora_8cpp_source.html#l00077">lora.cpp:77</a></div></div>
+<div class="ttc" id="alora_8h_html_a759190db192ee81162c88decd75d3a7d"><div class="ttname"><a href="lora_8h.html#a759190db192ee81162c88decd75d3a7d">send_msg</a></div><div class="ttdeci">void send_msg(void)</div><div class="ttdoc">Sends a LoRa packet to the base station.</div><div class="ttdef"><b>Definition:</b> <a href="lora_8cpp_source.html#l00083">lora.cpp:83</a></div></div>
 <div class="ttc" id="alora_8h_html_a5406703a916059feeaac0ce650e6ceb7"><div class="ttname"><a href="lora_8h.html#a5406703a916059feeaac0ce650e6ceb7">lora_init</a></div><div class="ttdeci">void lora_init(void)</div><div class="ttdoc">Initialize the LoRa radio.</div><div class="ttdef"><b>Definition:</b> <a href="lora_8cpp_source.html#l00017">lora.cpp:17</a></div></div>
-<div class="ttc" id="alora_8h_html_a089352c2289222c02d40868445328d6b"><div class="ttname"><a href="lora_8h.html#a089352c2289222c02d40868445328d6b">build_msg</a></div><div class="ttdeci">void build_msg(float flow, char *weight, float temp, char *time)</div><div class="ttdoc">Builds a JSON string to send over LoRa.</div><div class="ttdef"><b>Definition:</b> <a href="lora_8cpp_source.html#l00058">lora.cpp:58</a></div></div>
+<div class="ttc" id="alora_8h_html_a081e4c64303e45009a39fd81bdf5eb7f"><div class="ttname"><a href="lora_8h.html#a081e4c64303e45009a39fd81bdf5eb7f">build_msg</a></div><div class="ttdeci">void build_msg(float flow, char *weight, float temp, float maxtemp)</div><div class="ttdoc">Builds a JSON string to send over LoRa.</div><div class="ttdef"><b>Definition:</b> <a href="lora_8cpp_source.html#l00058">lora.cpp:58</a></div></div>
 <div class="ttc" id="apinout_8h_html"><div class="ttname"><a href="pinout_8h.html">pinout.h</a></div></div>
+<div class="ttc" id="ameasure_8h_html"><div class="ttname"><a href="measure_8h.html">measure.h</a></div></div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
