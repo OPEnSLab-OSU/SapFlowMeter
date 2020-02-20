@@ -1,5 +1,5 @@
 board=adafruit:samd:adafruit_feather_m0
-sketch=debug
+sketch=sapflow_protothread
 bossac=/home/marshal/.arduino15/packages/arduino/tools/bossac/1.7.0-arduino3/bossac
 port=/dev/ttyACM0
 

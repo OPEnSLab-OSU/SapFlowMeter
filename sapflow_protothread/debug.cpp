@@ -4,7 +4,6 @@
 
 FlashStorage(persistent, class FunctionMarker);
 
-static class WatchdogSAMD wdt;
 int line;
 const char * function;
 
@@ -61,6 +60,8 @@ bool FunctionMarker::read(void){
 void WDT_Handler(void) {
     WDT->INTFLAG.bit.EW  = 1;        // Clear interrupt flag
     Serial.println("Watchdog!");
+    // Turn off the heater so we don't burn the tree
+    digitalWrite(HEATER, LOW); 
     halt_location.print();
     halt_location.write();
 }

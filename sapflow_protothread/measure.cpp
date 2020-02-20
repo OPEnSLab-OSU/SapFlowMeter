@@ -22,9 +22,9 @@ int measure(struct pt *pt)
 {
   PT_BEGIN(pt);
   Serial.print("Initializing measurement thread... ");
-  static Adafruit_MAX31865 upper_rtd = Adafruit_MAX31865(A5);
-  static Adafruit_MAX31865 lower_rtd = Adafruit_MAX31865(A4);
-  static Adafruit_MAX31865 heater_rtd = Adafruit_MAX31865(A3);
+  static Adafruit_MAX31865 upper_rtd = Adafruit_MAX31865(UPPER_CS);
+  static Adafruit_MAX31865 lower_rtd = Adafruit_MAX31865(LOWER_CS);
+  static Adafruit_MAX31865 heater_rtd = Adafruit_MAX31865(HEATER_CS);
   upper_rtd.begin(MAX31865_2WIRE);
   lower_rtd.begin(MAX31865_2WIRE);
   heater_rtd.begin(MAX31865_2WIRE);

@@ -2,6 +2,7 @@
 
 #include <string.h> // for strncpy
 #include <Arduino.h>
+#include "pinout.h"
 
 class FunctionMarker{
 public:
@@ -43,6 +44,7 @@ private:
 
 
 static class FunctionMarker halt_location;
+static class WatchdogSAMD wdt;
 
 #define MARK() halt_location.set(__LINE__,__PRETTY_FUNCTION__); \
 wdt.reset()
