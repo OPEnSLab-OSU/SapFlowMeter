@@ -10,7 +10,7 @@ const char * function;
 
 void FunctionMarker::set(int l, const char * str){
   line = l;
-  function = (char*)str;
+  function = str;
 }
 
 void FunctionMarker::print(void){
@@ -24,6 +24,7 @@ void FunctionMarker::write(void){
   // Copy pointed value to buffer
   strncpy(buffer, function, 100);
   function = buffer;
+  line2 = line;
   // Then save to the flash
   persistent.write(*this);
 }
@@ -31,13 +32,13 @@ void FunctionMarker::write(void){
 bool FunctionMarker::read(void){
   // Read the value from memory
   *this = persistent.read();
-
-  // If we stored this before, then the function points to the buffer.
-  return (function==buffer);
+  line = line2;
+  function = buffer;
+  // If we stored this before, then the line number is not 0.
+  return (line!=0);
 }
 
 // Requires Adafruit_ASFcore library!
-
 // Be careful to use a platform-specific conditional include to only make the
 // code visible for the appropriate platform.  Arduino will try to compile and
 // link all .cpp files regardless of platform.

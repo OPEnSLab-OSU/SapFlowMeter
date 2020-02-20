@@ -11,6 +11,7 @@ public:
   bool read(void);
 private:
   char buffer[100];
+  int line2;
 };
 
 class WatchdogSAMD {
