@@ -13,6 +13,7 @@ public:
   bool read(void);
   void pause(void);
   void resume(void);
+  void mark(void);
 private:
   char buffer[100];
   int line2;
@@ -44,7 +45,6 @@ private:
 
 
 static class FunctionMarker halt_location;
-static class WatchdogSAMD wdt;
 
 #define MARK() halt_location.set(__LINE__,__PRETTY_FUNCTION__); \
-wdt.reset()
+halt_location.mark()

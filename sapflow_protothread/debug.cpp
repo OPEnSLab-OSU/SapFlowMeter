@@ -4,6 +4,8 @@
 
 FlashStorage(persistent, class FunctionMarker);
 
+static class WatchdogSAMD wdt;
+
 int line;
 const char * function;
 
@@ -13,13 +15,18 @@ void FunctionMarker::set(int l, const char * str){
 }
 
 void FunctionMarker::init(int milliseconds){
-  if(read())
-    print();
-  period = wdt.enable(milliseconds);
+  read();
+  print();
+  period = milliseconds;
+  wdt.enable(period);
 }
 
 void FunctionMarker::pause(void){
   wdt.disable();
+}
+
+void FunctionMarker::mark(void){
+  wdt.reset();
 }
 
 void FunctionMarker::resume(void){

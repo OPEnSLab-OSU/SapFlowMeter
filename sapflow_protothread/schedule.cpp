@@ -22,6 +22,7 @@ void feather_sleep( void ){MARK();
   digitalWrite(EN_3v3, HIGH); 
   digitalWrite(EN_5v, LOW);
   digitalWrite(STATUS_LED, LOW);MARK();
+  Serial.println("Sleeping");
   halt_location.pause();
 #if 0
   // Prep for sleep
@@ -42,6 +43,8 @@ void feather_sleep( void ){MARK();
   // This draws a lot of power, so don't do this in production
   while(digitalRead(ALARM_PIN));
 #endif
+  halt_location.read();
+  halt_location.print();
   halt_location.resume();
   MARK();
   digitalWrite(STATUS_LED, HIGH);
