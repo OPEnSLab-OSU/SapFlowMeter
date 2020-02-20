@@ -13,6 +13,10 @@ void FunctionMarker::set(int l, const char * str){
   function = str;
 }
 
+void FunctionMarker::init(void){
+  if(read())
+    print();
+}
 void FunctionMarker::print(void){
   Serial.print("Halted at ");
   Serial.print(function);

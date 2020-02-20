@@ -5,6 +5,7 @@
 
 class FunctionMarker{
 public:
+  void init(void);
   void set(int l, const char * str);
   void print(void);
   void write(void);
@@ -42,5 +43,5 @@ static class FunctionMarker halt_location;
 
 static class WatchdogSAMD wdt;
 
-#define MARK() halt_location.set(__LINE__,__PRETTY_FUNCTION__)
-//wdt.reset()
+#define MARK() halt_location.set(__LINE__,__PRETTY_FUNCTION__); \
+wdt.reset()
