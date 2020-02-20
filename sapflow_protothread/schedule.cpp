@@ -8,12 +8,12 @@ void alarmISR() {
   detachInterrupt(digitalPinToInterrupt(ALARM_PIN));
 }
 
-void feather_sleep( void ){
+void feather_sleep( void ){MARK();
   while(!digitalRead(ALARM_PIN)){
     pinMode(ALARM_PIN, INPUT_PULLUP);
     Serial.print("Waiting on alarm pin...");
     delay(10);
-  }
+  }MARK();
   // Disable SPI to save power
   pinMode(SPI_SCK, INPUT);
   pinMode(SPI_MOSI, INPUT);
@@ -21,7 +21,7 @@ void feather_sleep( void ){
   // Turn off power rails
   digitalWrite(EN_3v3, HIGH); 
   digitalWrite(EN_5v, LOW);
-  digitalWrite(STATUS_LED, LOW);
+  digitalWrite(STATUS_LED, LOW);MARK();
 #if 0
   // Prep for sleep
   Serial.end();
@@ -41,30 +41,30 @@ void feather_sleep( void ){
   // This draws a lot of power, so don't do this in production
   while(digitalRead(ALARM_PIN));
 #endif
+  MARK();
   digitalWrite(STATUS_LED, HIGH);
   digitalWrite(EN_3v3, LOW); 
   digitalWrite(EN_5v, HIGH);
   pinMode(SPI_SCK, OUTPUT);
   pinMode(SPI_MOSI, OUTPUT);
-  pinMode(SD_CS, OUTPUT);
-  sd.begin(SD_CS, SD_SCK_MHZ(1));
+  pinMode(SD_CS, OUTPUT);MARK();
+  sd.begin(SD_CS, SD_SCK_MHZ(1));MARK();
 }
 
 // Sleep until the time is a round multiple of the minute inteval.
 // Produces unexpected bevahior for non-factors of 60 (7, 8, 9, 11, etc)
-void sleep_cycle( int interval ){
+void sleep_cycle( int interval ){MARK();
   Serial.print("Sleeping until nearest multiple of ");
   Serial.print(interval);
-  Serial.println(" minutes");
-  DateTime t = rtc_ds.now();
-  t = t + TimeSpan( interval * 60 );
-  uint8_t minutes = interval*(t.minute()/interval);
-  rtc_ds.setAlarm(ALM2_MATCH_MINUTES, minutes, 0, 0);
-  Serial.print("Alarm set to ");
-  t = rtc_ds.getAlarm(2);
-  Serial.println(t.text());
-  delay(1000);
-  feather_sleep();
+  Serial.println(" minutes");MARK();
+  DateTime t = rtc_ds.now();MARK();
+  t = t + TimeSpan( interval * 60 );MARK();
+  uint8_t minutes = interval*(t.minute()/interval);MARK();
+  rtc_ds.setAlarm(ALM2_MATCH_MINUTES, minutes, 0, 0);MARK();
+  Serial.print("Alarm set to ");MARK();
+  t = rtc_ds.getAlarm(2);MARK();
+  Serial.println(t.text());MARK();
+  feather_sleep();MARK();
 }
 
 int schedule(struct pt *pt)
@@ -84,23 +84,24 @@ int schedule(struct pt *pt)
   Serial.println("Done");
   while (1)
   {
-    Serial.print("Awoke at ");
-    Serial.println(rtc_ds.now().text());
-    PT_WAIT_THREAD(pt, baseline());
-    digitalWrite(HEATER, HIGH);
-    Serial.print("Heater On at ");
-    Serial.println(rtc_ds.now().text());
-    PT_TIMER_DELAY(pt,6000);
-    digitalWrite(HEATER, LOW);
-    Serial.print("Heater Off at ");
-    Serial.println(rtc_ds.now().text());
-    PT_TIMER_DELAY(pt,5);
-    Serial.println("Temperature probably reached plateau");
-    PT_WAIT_THREAD(pt, delta());
-    Serial.println("Finished logging");
+    Serial.print("Awoke at ");MARK();
+    Serial.println(rtc_ds.now().text());MARK();
+    PT_WAIT_THREAD(pt, baseline());MARK();
+    digitalWrite(HEATER, HIGH);MARK();
+    Serial.print("Heater On at ");MARK();
+    Serial.println(rtc_ds.now().text());MARK();
+    PT_TIMER_DELAY(pt,6000);MARK();
+    digitalWrite(HEATER, LOW);MARK();
+    Serial.print("Heater Off at ");MARK();
+    Serial.println(rtc_ds.now().text());MARK();
+    PT_TIMER_DELAY(pt,5);MARK();
+    Serial.println("Temperature probably reached plateau");MARK();
+    PT_WAIT_THREAD(pt, delta());MARK();
+    Serial.println("Finished logging");MARK();
     sleep = true;
     PT_YIELD(pt); // Wait for all threads to prep for sleep
-    sleep_cycle(1); 
+    MARK();
+    sleep_cycle(1); MARK();
     sleep = false;
   }
   PT_END(pt);

@@ -45,25 +45,26 @@ int measure(struct pt *pt)
     PT_WAIT_WHILE(pt, sample_trigger);
     //Serial.println("Sampling...");
     // Get the latest temperature
-    latest.upper = upper_rtd.temperature(Rnom, Rref);
-    latest.lower = lower_rtd.temperature(Rnom, Rref);
-    latest.heater = heater_rtd.temperature(Rnom, Rref);
-    DateTime t = rtc_ds.now();
+    MARK();
+    latest.upper = upper_rtd.temperature(Rnom, Rref); MARK();
+    latest.lower = lower_rtd.temperature(Rnom, Rref); MARK();
+    latest.heater = heater_rtd.temperature(Rnom, Rref); MARK();
+    DateTime t = rtc_ds.now(); MARK();
     // Print to Serial terminal
-    cout << "Upper: " << latest.upper << " Lower: " 
-    << latest.lower << " Heater: " <<latest.heater 
-    << " Time: " << t.text() << endl;
+    cout << "Upper: " << latest.upper << " Lower: "; MARK();
+    cout << latest.lower << " Heater: " <<latest.heater; MARK();
+    cout << " Time: " << t.text() << endl; MARK();
     // Save calculated sapflow
-    cout<<"Logfile...";
+    cout<<"Logfile..."; MARK();
     ofstream logfile = ofstream("demo_log.csv", 
-                                     ios::out | ios::app );
-    cout<<"opened...";
-    logfile << t.text() << ", ";
-    logfile << setw(6) << latest.upper << ", "
-    << setw(6) << latest.lower << ", "
-    << setw(6) << latest.heater << endl;
-    logfile.close(); // Ensure the file is closed
-    cout<<"done"<<endl;
+        ios::out | ios::app ); MARK();
+    cout<<"opened..."; MARK();
+    logfile << t.text() << ", "; MARK();
+    logfile << setw(6) << latest.upper << ", "; MARK();
+    logfile << setw(6) << latest.lower << ", "; MARK();
+    logfile << setw(6) << latest.heater << endl; MARK();
+    logfile.close();  MARK();// Ensure the file is closed
+    cout<<"done"<<endl; MARK();
   }
   PT_END(pt);
 }
@@ -79,15 +80,15 @@ int baseline(struct pt *pt)
   reference.upper = 0;
   reference.lower = 0;
   Serial.println("Done");
-  for(i = 0; i < 10; ++i){
-    PT_WAIT_UNTIL(pt, sample_trigger);
-    PT_WAIT_WHILE(pt, sample_trigger);
+  for(i = 0; i < 10; ++i){ MARK();
+    PT_WAIT_UNTIL(pt, sample_trigger); MARK();
+    PT_WAIT_WHILE(pt, sample_trigger); MARK();
     reference.upper += latest.upper;
     reference.lower += latest.lower;
-  }while(millis()<(pt)->t);
+  }; MARK();
   reference.upper /= i;
-  reference.lower /= i;
-  cout<<"Baseline: "<<reference.upper<<", "<<reference.lower<<endl;
+  reference.lower /= i; MARK();
+  cout<<"Baseline: "<<reference.upper<<", "<<reference.lower<<endl; MARK();
   PT_END(pt);
 }
 
@@ -104,36 +105,34 @@ int delta(struct pt *pt)
   // Initialize the flow value
   flow = 0;
   Serial.println("Done");
-  for(i = 0; i < 5; ++i ){
-    PT_WAIT_UNTIL(pt, sample_trigger);
-    PT_WAIT_WHILE(pt, sample_trigger);
+  for(i = 0; i < 5; ++i ){ MARK();
+    PT_WAIT_UNTIL(pt, sample_trigger); MARK();
+    PT_WAIT_WHILE(pt, sample_trigger); MARK();
     // Ratio of upper delta over lower delta
     float udelt = latest.upper - reference.upper;
     float ldelt = latest.lower - reference.lower;
-    cout << "Delta: " << udelt <<", " << ldelt << endl;
+    cout << "Delta: " << udelt <<", " << ldelt << endl; MARK();
     flow += udelt / ldelt;
-  };
-  cout<<"Finished measurements."<<endl;
-  flow /= i;
-  flow = log(flow) * (3600.*2e-6/7e-3);
-  cout<<"Flow is "<<flow<<endl;
+  }; MARK();
+  cout<<"Finished measurements."<<endl; MARK();
+  flow /= i; MARK();
+  flow = log(flow) * (3600.*2e-6/7e-3); MARK();
+  cout<<"Flow is "<<flow<<endl; MARK();
   // Write the sapflow to the file.
-  cout<<"Opening logfile...";
-  ofstream sapfile = ofstream("demo.csv", ios::out | ios::app);
-  cout<<"Done"<<endl;
-  char * time = rtc_ds.now().text();
-  char * weight = read_weight();
-  cout << time << ", "
-  << reference.upper << ", "
-  << reference.lower << ", "
-  << flow << ", " << endl;
-  sapfile << time << ", "<< reference.upper << ", "
-  << reference.lower << ", "<< flow << ", "<< weight
-  << endl;
-  sapfile.close();
-  lora_init();
-  build_msg(flow, weight, reference.upper, maxtemp);
-  send_msg();
+  cout<<"Opening logfile..."; MARK();
+  ofstream sapfile = ofstream("demo.csv", ios::out | ios::app); MARK();
+  cout<<"Done"<<endl; MARK();
+  char * time = rtc_ds.now().text(); MARK();
+  cout << time << ", "; MARK();
+  cout << reference.upper << ", "; MARK();
+  cout << reference.lower << ", "; MARK();
+  cout << flow << ", " << endl; MARK();
+  sapfile << time << ", "<< reference.upper << ", "; MARK();
+  sapfile << reference.lower << ", "<< flow << ", "<< endl; MARK();
+  sapfile.close(); MARK();
+  lora_init(); MARK();
+  build_msg(flow, "0", reference.upper, maxtemp); MARK();
+  send_msg(); MARK();
   
   PT_END(pt);
 }
