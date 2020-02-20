@@ -49,22 +49,22 @@ int measure(struct pt *pt)
     latest.upper = upper_rtd.temperature(Rnom, Rref); MARK();
     latest.lower = lower_rtd.temperature(Rnom, Rref); MARK();
     latest.heater = heater_rtd.temperature(Rnom, Rref); MARK();
+    maxtemp = max(latest.upper, maxtemp); MARK();
+    maxtemp = max(latest.lower, maxtemp); MARK();
+    maxtemp = max(latest.heater, maxtemp); MARK();
     DateTime t = rtc_ds.now(); MARK();
     // Print to Serial terminal
     cout << "Upper: " << latest.upper << " Lower: "; MARK();
     cout << latest.lower << " Heater: " <<latest.heater; MARK();
     cout << " Time: " << t.text() << endl; MARK();
     // Save calculated sapflow
-    cout<<"Logfile..."; MARK();
     ofstream logfile = ofstream("demo_log.csv", 
         ios::out | ios::app ); MARK();
-    cout<<"opened..."; MARK();
     logfile << t.text() << ", "; MARK();
     logfile << setw(6) << latest.upper << ", "; MARK();
     logfile << setw(6) << latest.lower << ", "; MARK();
     logfile << setw(6) << latest.heater << endl; MARK();
     logfile.close();  MARK();// Ensure the file is closed
-    cout<<"done"<<endl; MARK();
   }
   PT_END(pt);
 }
@@ -72,13 +72,14 @@ int measure(struct pt *pt)
 // Calculates baseline temperature
 int baseline(struct pt *pt)
 {
-  PT_BEGIN(pt);
+  PT_BEGIN(pt);MARK();
   Serial.print("Initializing baseline thread... ");
   // Declare persistant variable for this thread
   static int i;
   // Initialize the baseline (reference) temperature
   reference.upper = 0;
   reference.lower = 0;
+  maxtemp = -300; // Any temperature should be greater than this.
   Serial.println("Done");
   for(i = 0; i < 10; ++i){ MARK();
     PT_WAIT_UNTIL(pt, sample_trigger); MARK();
@@ -96,12 +97,11 @@ int baseline(struct pt *pt)
 // Calculates temperature delta and sapflow
 int delta(struct pt *pt)
 {
-  PT_BEGIN(pt);
+  PT_BEGIN(pt);MARK();
   Serial.print("Initializing delta thread... ");
   // Declare persistent variables for this thread
   static int i;
   static float flow;
-  maxtemp = latest.heater; // This should be the heater peak temperature
   // Initialize the flow value
   flow = 0;
   Serial.println("Done");
@@ -119,9 +119,7 @@ int delta(struct pt *pt)
   flow = log(flow) * (3600.*2e-6/7e-3); MARK();
   cout<<"Flow is "<<flow<<endl; MARK();
   // Write the sapflow to the file.
-  cout<<"Opening logfile..."; MARK();
   ofstream sapfile = ofstream("demo.csv", ios::out | ios::app); MARK();
-  cout<<"Done"<<endl; MARK();
   char * time = rtc_ds.now().text(); MARK();
   cout << time << ", "; MARK();
   cout << reference.upper << ", "; MARK();
