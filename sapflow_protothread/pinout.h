@@ -22,9 +22,9 @@ enum pinout{
   SPI_MISO = 22, ///< SPI data pin. Input.
   TX = 1, ///< Serial1 transmit, used for RS232. Output.
   RX = 0, ///< Serial1 receive, used for RS232. Input.
-//  UPPER_CS = A5, // Upper RTD
-//  LOWER_CS = A4, // Lower RTD
-//  HEATER_CS = A3, // Heater RTD
+  UPPER_CS = 19, ///< Upper RTD amplifier chip select. Output.
+  LOWER_CS = 18, ///< Lower RTD amplifier chip select. Output.
+  HEATER_CS = 17, ///< Heater RTD amplifier chip select. Output.
   RFM95_CS = 8, ///< SPI chip select used for LoRa. Output, Active-low.
   RFM95_RST = 4,///< Reset pin used for LoRa. Output. Active-low?
   RFM95_INT = 3,///< Interrupt pin used for LoRa. Input. Active-low?

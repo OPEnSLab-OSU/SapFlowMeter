@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pinout.h"
+#include "measure.h" // for rtc_ds.now().text()
 
 #define CLIENT_ADDRESS 1 ///< Our LoRa address
 #define SERVER_ADDRESS 2 ///< The LoRa address of the base station
@@ -33,7 +34,7 @@ The string is stored in a global variable to be read by send_msg()
 @param temp The baseline temperature of the tree
 @param time The date and time from the Real-Time Clock
 */
-void build_msg(float flow, char * weight, float temp, char * time);
+void build_msg(float flow, char * weight, float temp, float maxtemp);
 
 /**
 Sends a LoRa packet to the base station.

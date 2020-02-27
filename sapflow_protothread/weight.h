@@ -17,5 +17,5 @@ This function prevents buffer overruns, but no data validation is performed.
 
 @param buffer The string to store the data into (Default value is ok)
 @param len The length of the buffer. (Default value is ok)
-@returns The same buffer that was passed in, containing text read from the scale.
+@returns The same buffer that was passed in, containing text read from the scale. */
 char * read_weight( char * buffer = weight_buf, int len=20 );

@@ -1,5 +1,7 @@
 #include "weight.h"
 
+/// @file
+
 // Gets the weight from the scale
 char * read_weight( char * buffer, int len ){
   // Clear the buffer in case someone was messing with the cable
