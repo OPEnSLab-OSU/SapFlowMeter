@@ -2,35 +2,41 @@
 #include <FlashStorage.h>
 #include <sam.h>
 
+/// @file
+
+// Object for reading and writing from flash
 FlashStorage(persistent, class FunctionMarker);
 
+// Instance of the watchdog
 static class WatchdogSAMD wdt;
 
+// Stores the line number
 int line;
+// Stores a pointer to the function name
 const char * function;
 
 void FunctionMarker::set(int l, const char * str){
+  // Feed the watchdog
+  wdt.reset();
+  // Record the line number and function this was called from
   line = l;
   function = str;
 }
 
 void FunctionMarker::init(int milliseconds){
-  read();
-  print();
-  period = milliseconds;
-  wdt.enable(period);
+  read(); //< Read the previous watchdog status
+  print();//< Print it out
+  period = milliseconds;  //< Remember the period selected
+  wdt.enable(period); //< Enable the watchdog
 }
 
 void FunctionMarker::pause(void){
-  wdt.disable();
-}
-
-void FunctionMarker::mark(void){
-  wdt.reset();
+  wdt.disable(); //< Disable the watchdog for now
 }
 
 void FunctionMarker::resume(void){
-  wdt.enable(period);
+  // Re-enable the watchdog, using the same period as before
+  wdt.enable(period); 
 }
 
 void FunctionMarker::print(void){
@@ -65,20 +71,23 @@ bool FunctionMarker::read(void){
 #if defined(ARDUINO_ARCH_SAMD)
 
 void WDT_Handler(void) {
-    WDT->INTFLAG.bit.EW  = 1;        // Clear interrupt flag
+    WDT->INTFLAG.bit.EW  = 1;        //< Clear interrupt flag
     Serial.println("Watchdog!");
     // Turn off the heater so we don't burn the tree
     digitalWrite(HEATER, LOW); 
+    // Print where we halted and write it to flash
     halt_location.print();
     halt_location.write();
 }
 
 int WatchdogSAMD::enable(int maxPeriodMS) {
-    // Enable the watchdog with a period up to the specified max period in
-    // milliseconds.
+    /** Enable the watchdog with a period up to the specified max period in
+    milliseconds.
 
-    // Review the watchdog section from the SAMD21 datasheet section 18:
-    // http://ww1.microchip.com/downloads/en/DeviceDoc/SAMD21-Family-DataSheet-DS40001882D.pdf
+    Rounds up to the nearest multiple of 2
+    Review the watchdog section from the SAMD21 datasheet section 18:
+    http://ww1.microchip.com/downloads/en/DeviceDoc/SAMD21-Family-DataSheet-DS40001882D.pdf
+    */
 
     int     cycles;
     uint8_t bits;
@@ -86,17 +95,17 @@ int WatchdogSAMD::enable(int maxPeriodMS) {
     if(!_initialized) _initialize_wdt();
 
 #if defined(__SAMD51__)
-    WDT->CTRLA.reg = 0; // Disable watchdog for config
+    WDT->CTRLA.reg = 0; //< Disable watchdog for config
     while(WDT->SYNCBUSY.reg);
 #else
-    WDT->CTRL.reg = 0; // Disable watchdog for config
+    WDT->CTRL.reg = 0; //< Disable watchdog for config
     while(WDT->STATUS.bit.SYNCBUSY);
 #endif
 
     if((maxPeriodMS >= 8000) || !maxPeriodMS) {
         bits   = 0xA;
     } else {
-        cycles = maxPeriodMS >> 2; // min delay is 8ms
+        cycles = maxPeriodMS >> 2; //< min delay is 8ms
         bits = 0;
         // Cycle choices are in powers of 2
         while( cycles = cycles>>1){
@@ -123,23 +132,23 @@ int WatchdogSAMD::enable(int maxPeriodMS) {
     // is not used, the WDT period is set and that's that.
 
 #if defined(__SAMD51__)
-    WDT->INTFLAG.bit.EW      = 1;    // Clear interrupt flag
-    WDT->INTENSET.bit.EW     = 1;    // Enable early warning interrupt
-    WDT->CONFIG.bit.PER      = bits+1;  // Period = twice
-    WDT->EWCTRL.bit.EWOFFSET = bits;  // Set time of interrupt
-    WDT->CTRLA.bit.WEN       = 0;    // Disable window mode
-    while(WDT->SYNCBUSY.reg);        // Sync CTRL write
-    reset();                             // Clear watchdog interval
-    WDT->CTRLA.bit.ENABLE = 1;           // Start watchdog now!
+    WDT->INTFLAG.bit.EW      = 1;    //< Clear interrupt flag
+    WDT->INTENSET.bit.EW     = 1;    //< Enable early warning interrupt
+    WDT->CONFIG.bit.PER      = bits+1;//< Period = twice
+    WDT->EWCTRL.bit.EWOFFSET = bits;  //< Set time of interrupt
+    WDT->CTRLA.bit.WEN       = 0;    //< Disable window mode
+    while(WDT->SYNCBUSY.reg);        //< Sync CTRL write
+    reset();                         //< Clear watchdog interval
+    WDT->CTRLA.bit.ENABLE = 1;       //< Start watchdog now!
     while(WDT->SYNCBUSY.reg);
 #else
-    WDT->INTENSET.bit.EW   = 1;      // Enable early warning interrupt
-    WDT->CONFIG.bit.PER    = bits+1;    // Period = twice
-    WDT->EWCTRL.bit.EWOFFSET = bits;  // Set time of interrupt
-    WDT->CTRL.bit.WEN      = 0;      // Disable window mode
-    while(WDT->STATUS.bit.SYNCBUSY); // Sync CTRL write
-    reset();                             // Clear watchdog interval
-    WDT->CTRL.bit.ENABLE = 1;            // Start watchdog now!
+    WDT->INTENSET.bit.EW   = 1;      //< Enable early warning interrupt
+    WDT->CONFIG.bit.PER    = bits+1; //< Period = twice
+    WDT->EWCTRL.bit.EWOFFSET = bits; //< Set time of interrupt
+    WDT->CTRL.bit.WEN      = 0;      //< Disable window mode
+    while(WDT->STATUS.bit.SYNCBUSY); //< Sync CTRL write
+    reset();                         //< Clear watchdog interval
+    WDT->CTRL.bit.ENABLE = 1;        //< Start watchdog now!
     while(WDT->STATUS.bit.SYNCBUSY);
 #endif
 
@@ -183,22 +192,22 @@ void WatchdogSAMD::_initialize_wdt() {
 #if defined(__SAMD51__)
     // SAMD51 WDT uses OSCULP32k as input clock now
     // section: 20.5.3
-    OSC32KCTRL->OSCULP32K.bit.EN1K  = 1; // Enable out 1K (for WDT)
-    OSC32KCTRL->OSCULP32K.bit.EN32K = 0; // Disable out 32K
+    OSC32KCTRL->OSCULP32K.bit.EN1K  = 1; //< Enable out 1K (for WDT)
+    OSC32KCTRL->OSCULP32K.bit.EN32K = 0; //< Disable out 32K
 
     // Enable WDT early-warning interrupt
     NVIC_DisableIRQ(WDT_IRQn);
     NVIC_ClearPendingIRQ(WDT_IRQn);
-    NVIC_SetPriority(WDT_IRQn, 0); // Top priority
+    NVIC_SetPriority(WDT_IRQn, 0); //< Top priority
     NVIC_EnableIRQ(WDT_IRQn);
 
     while(WDT->SYNCBUSY.reg);
     
-    USB->DEVICE.CTRLA.bit.ENABLE = 0;         // Disable the USB peripheral
-    while(USB->DEVICE.SYNCBUSY.bit.ENABLE);   // Wait for synchronization
-    USB->DEVICE.CTRLA.bit.RUNSTDBY = 0;       // Deactivate run on standby
-    USB->DEVICE.CTRLA.bit.ENABLE = 1;         // Enable the USB peripheral
-    while(USB->DEVICE.SYNCBUSY.bit.ENABLE);   // Wait for synchronization
+    USB->DEVICE.CTRLA.bit.ENABLE = 0;        //< Disable the USB peripheral
+    while(USB->DEVICE.SYNCBUSY.bit.ENABLE);  //< Wait for synchronization
+    USB->DEVICE.CTRLA.bit.RUNSTDBY = 0;      //< Deactivate run on standby
+    USB->DEVICE.CTRLA.bit.ENABLE = 1;        //< Enable the USB peripheral
+    while(USB->DEVICE.SYNCBUSY.bit.ENABLE);  //< Wait for synchronization
 #else
     // Generic clock generator 2, divisor = 32 (2^(DIV+1))
     GCLK->GENDIV.reg = GCLK_GENDIV_ID(2) | GCLK_GENDIV_DIV(4);
@@ -217,7 +226,7 @@ void WatchdogSAMD::_initialize_wdt() {
     // Enable WDT early-warning interrupt
     NVIC_DisableIRQ(WDT_IRQn);
     NVIC_ClearPendingIRQ(WDT_IRQn);
-    NVIC_SetPriority(WDT_IRQn, 0); // Top priority
+    NVIC_SetPriority(WDT_IRQn, 0); //< Top priority
     NVIC_EnableIRQ(WDT_IRQn);
 #endif
 

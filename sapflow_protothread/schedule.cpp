@@ -1,5 +1,7 @@
 #include "schedule.h"
 
+/// @file 
+
 void alarmISR() {
   // Reset the alarm.
   rtc_ds.armAlarm(1, false);
@@ -9,6 +11,7 @@ void alarmISR() {
 }
 
 void feather_sleep( void ){MARK();
+  // Wait for the alarm to clear
   while(!digitalRead(ALARM_PIN)){
     pinMode(ALARM_PIN, INPUT_PULLUP);
     Serial.print("Waiting on alarm pin...");
@@ -24,12 +27,12 @@ void feather_sleep( void ){MARK();
   digitalWrite(STATUS_LED, LOW);MARK();
   Serial.println("Sleeping");
   halt_location.pause();
-#if 0
+#if 1
   // Prep for sleep
   Serial.end();
   USBDevice.detach();
   // Low-level so we can wake from sleep
-  // Maybe a synchronization issue?
+  // We have to call this twice - maybe a synchronization issue?
   attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
   attachInterrupt(digitalPinToInterrupt(ALARM_PIN), alarmISR, LOW);
   // Sleep
@@ -43,13 +46,16 @@ void feather_sleep( void ){MARK();
   // This draws a lot of power, so don't do this in production
   while(digitalRead(ALARM_PIN));
 #endif
+  // Resume the watchdog
   halt_location.read();
   halt_location.print();
   halt_location.resume();
   MARK();
+  // Enable the power rails
   digitalWrite(STATUS_LED, HIGH);
   digitalWrite(EN_3v3, LOW); 
   digitalWrite(EN_5v, HIGH);
+  // Start the SD card again
   pinMode(SPI_SCK, OUTPUT);
   pinMode(SPI_MOSI, OUTPUT);
   pinMode(SD_CS, OUTPUT);MARK();
@@ -80,33 +86,31 @@ int schedule(struct pt *pt)
   if (! rtc_ds.begin()) {
     Serial.println("Couldn't find RTC");
   }
-  // This may end up causing a problem in practice - what if RTC loses power in field? Shouldn't happen with coin cell batt backup
+  // If this is a new RTC, set the time
   if (rtc_ds.lostPower()) {
     Serial.println("RTC lost power, lets set the time!");
     // Set the RTC to the date & time this sketch was compiled
     rtc_ds.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
   Serial.println("Done");
+  // This is the main schedule for the program
   while (1)
   {
     Serial.print("Awoke at ");MARK();
     Serial.println(rtc_ds.now().text());MARK();
-    PT_WAIT_THREAD(pt, baseline());MARK();
-    digitalWrite(HEATER, HIGH);MARK();
+    PT_WAIT_THREAD(pt, baseline());MARK(); //<Measure the baseline temp
+    digitalWrite(HEATER, HIGH);MARK(); //< Turn on the heater
     Serial.print("Heater On at ");MARK();
     Serial.println(rtc_ds.now().text());MARK();
-    PT_TIMER_DELAY(pt,6000);MARK();
-    digitalWrite(HEATER, LOW);MARK();
+    PT_TIMER_DELAY(pt,6000);MARK(); //< Heater is on for 6 seconds
+    digitalWrite(HEATER, LOW);MARK(); //< Turn off the heater
     Serial.print("Heater Off at ");MARK();
     Serial.println(rtc_ds.now().text());MARK();
-    PT_TIMER_DELAY(pt,5);MARK();
+    PT_TIMER_DELAY(pt,100);MARK();  //< Wait for heat to propagate
     Serial.println("Temperature probably reached plateau");MARK();
-    PT_WAIT_THREAD(pt, delta());MARK();
+    PT_WAIT_THREAD(pt, delta());MARK(); //<Calculate the sapflow
     Serial.println("Finished logging");MARK();
-    sleep = true;
-    PT_YIELD(pt); // Wait for all threads to prep for sleep
-    MARK();
-    sleep_cycle(1); MARK();
+    sleep_cycle(5); MARK(); //<Sleep until the next multiple of 5 minutes
     sleep = false;
   }
   PT_END(pt);

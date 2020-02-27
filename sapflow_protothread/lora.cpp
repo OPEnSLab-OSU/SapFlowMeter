@@ -1,14 +1,14 @@
 #include "lora.h"
-// Feather9x_TX
-// Designed to work with  Feather9x_RX
+
+/// @file
 
 #include <RHReliableDatagram.h>
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <ArduinoJson.h>
-#include <ftoa.h> // for float to string conversion
+#include <ftoa.h> //< for float to string conversion
 
-// Singleton instance of the radio driver
+//< Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 // Class to manage message delivery and receipt, using the driver declared above
@@ -16,7 +16,7 @@ static RHReliableDatagram manager(rf95, CLIENT_ADDRESS);
 
 void lora_init(void) 
 {
-  digitalWrite(RFM95_CS, LOW); // enable LoRa
+  digitalWrite(RFM95_CS, LOW); //< enable LoRa
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
@@ -41,19 +41,19 @@ void lora_init(void)
   }
   Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
   
-  // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
+  /** Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
-  // The default transmitter power is 13dBm, using PA_BOOST.
-  // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
-  // you can set transmitter powers from 5 to 23 dBm:
+ The default transmitter power is 13dBm, using PA_BOOST.
+ If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
+ you can set transmitter powers from 5 to 23 dBm: */
   rf95.setTxPower(23, false);
-  digitalWrite(RFM95_CS, HIGH); // disable LoRa
+  digitalWrite(RFM95_CS, HIGH); //< disable LoRa
 }
 
-static int16_t packetnum = 0;  // packet counter, we increment per xmission
+static int16_t packetnum = 0;  //< packet counter, we increment per xmission
 
 static char radiopacket[RH_RF95_MAX_MESSAGE_LEN];
-static uint8_t packet_len; // This makes me nervous - how long IS the max message length?
+static uint8_t packet_len; //< Max message length is 251, so we won't overflow
 
 void build_msg(float flow, char * weight, float temp, float maxtemp)
 {
@@ -64,7 +64,7 @@ void build_msg(float flow, char * weight, float temp, float maxtemp)
   char str2[15];
   char str3[15];
   char * tstring = rtc_ds.now().text();
-  tstring += 11; // skip the date
+  tstring += 11; //< skip the date, just use the time
   ftoa(flow, str1);
   ftoa(temp, str3);
   ftoa(maxtemp, str2);
@@ -82,8 +82,8 @@ void build_msg(float flow, char * weight, float temp, float maxtemp)
 
 void send_msg( void )
 {
-  digitalWrite(RFM95_CS, LOW); // enable LoRa
-  Serial.println("Transmitting..."); // Send a message to rf95_server
+  digitalWrite(RFM95_CS, LOW); //< enable LoRa
+  Serial.println("Transmitting..."); //< Send a message to rf95_server
   // Send a message to manager_server
   if (manager.sendtoWait((uint8_t *)radiopacket, packet_len, SERVER_ADDRESS))
   {
@@ -106,5 +106,5 @@ void send_msg( void )
   else
     Serial.println("sendtoWait failed");
 
-  digitalWrite(RFM95_CS, HIGH); // disable LoRa
+  digitalWrite(RFM95_CS, HIGH); //< disable LoRa
 }

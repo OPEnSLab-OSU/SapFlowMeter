@@ -13,7 +13,6 @@ void setup() {
   pinMode(HEATER, OUTPUT);
   digitalWrite(HEATER, LOW);
   Serial.begin(115200);
-//  while(!Serial);
   Serial.println("Serial connected");
   halt_location.init(2000);
   //Initialize the Threads
@@ -24,12 +23,13 @@ void setup() {
   PT_INIT(&delta_thd);
   sleep = false;
   
+// Initialize the hardware
   pinMode(EN_3v3, OUTPUT);
   pinMode(EN_5v, OUTPUT);
   pinMode(I2C_SCL, INPUT_PULLUP);
   pinMode(I2C_SDA, INPUT_PULLUP);
   pinMode(RFM95_CS, OUTPUT);
-  digitalWrite(RFM95_CS, HIGH); // disable LoRa until we're ready to use
+  digitalWrite(RFM95_CS, HIGH); //< disable LoRa until we're ready to use
   digitalWrite(STATUS_LED, HIGH);
   digitalWrite(EN_3v3, LOW); 
   digitalWrite(EN_5v, HIGH);
@@ -45,8 +45,7 @@ This function is called inside a hidden loop in the Arduino framework.
 We're using it for protothread scheduling. All the real work happens inside the protothreads.
 */
 void loop() {
-  //Check each thread
-  measure();
-  schedule();
-  sample_timer();
+  measure();  //< Actually performs measurement. Gated by the sample_timer.
+  schedule(); //< Controls the sequence of actions in our measurement cycle
+  sample_timer(); //< Sets the sample rate at 1Hz
 }
