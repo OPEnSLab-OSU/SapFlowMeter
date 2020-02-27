@@ -1,4 +1,6 @@
 var annotated_dup =
 [
-    [ "temperature", "structtemperature.html", "structtemperature" ]
+    [ "FunctionMarker", "classFunctionMarker.html", "classFunctionMarker" ],
+    [ "temperature", "structtemperature.html", "structtemperature" ],
+    [ "WatchdogSAMD", "classWatchdogSAMD.html", "classWatchdogSAMD" ]
 ];

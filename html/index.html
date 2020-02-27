@@ -87,11 +87,11 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><img src="timing.png" alt="Timing diagram for sapflow measurement" class="inline"/></p>
-<p><b>Baseline:</b> Measures the initial temperature at the upper and lower probe. See <a class="el" href="measure_8h.html#ac0696e1dd57526aabd51d770895f4516" title="Calculates baseline temperature.">baseline()</a> for details.</p>
-<p><b>Heating:</b> Turns on the heater probe for 6 seconds. See <a class="el" href="schedule_8h.html#ae09db6f8d987484b5819748b59183443" title="Controls general measurement schedule.">schedule()</a> for details.</p>
-<p><b>Heat propagation:</b> This is simply a waiting period where the heat pulse has not reached the upper and lower temperature probes. See <a class="el" href="schedule_8h.html#ae09db6f8d987484b5819748b59183443" title="Controls general measurement schedule.">schedule()</a> for details.</p>
-<p><b>Calculation:</b> This is where we measure the amplitude of the heat pulse at the upper and lower temperature probes and calculate the sap flow. See <a class="el" href="measure_8h.html#acbb9387a9490e6eeae2df75084467d76" title="Calculates temperature delta and sapflow.">delta()</a> for details.</p>
-<p><b>Sleep:</b> We sleep here to save power. See <a class="el" href="schedule_8h.html#a38b56f6328e2d8eac998d970aba81edf" title="Sleep function for periodic sleeping.">sleep_cycle()</a> for details. </p>
+<p><b>Baseline:</b> Measures the initial temperature at the upper and lower probe. Samples temperature once per second for 10 seconds. See <a class="el" href="measure_8cpp.html#a31cf8d05fcffa8f51508a9c3db637413" title="Calculates baseline temperature.">baseline()</a> for details.</p>
+<p><b>Heating:</b> Turns on the heater probe for 6 seconds. See <a class="el" href="schedule_8cpp.html#a82ddb80712aeeda2b127a0a99765afd9" title="Controls general measurement schedule.">schedule()</a> for details.</p>
+<p><b>Heat propagation:</b> This is simply a waiting period where the heat pulse has not reached the upper and lower temperature probes. See <a class="el" href="schedule_8cpp.html#a82ddb80712aeeda2b127a0a99765afd9" title="Controls general measurement schedule.">schedule()</a> for details.</p>
+<p><b>Calculation:</b> This is where we measure the amplitude of the heat pulse at the upper and lower temperature probes and calculate the sap flow. Samples temperature once per second for 40 seconds. See <a class="el" href="measure_8cpp.html#aa831fa3620094ac2be9c85d34a89051e" title="Calculates temperature delta and sapflow.">delta()</a> for details.</p>
+<p><b>Sleep:</b> We sleep here to save power. See <a class="el" href="schedule_8cpp.html#a81c090a1b26fdf0e250c5f249ce28ea3" title="Sleep function for periodic sleeping.">sleep_cycle()</a> for details. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->

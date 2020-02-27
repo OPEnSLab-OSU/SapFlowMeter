@@ -200,7 +200,7 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  <span class="keywordtype">char</span> str2[15];</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;  <span class="keywordtype">char</span> str3[15];</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;  <span class="keywordtype">char</span> * tstring = <a class="code" href="schedule_8h.html#a4c06781bd70442b43eec7c92d3e7ea3a">rtc_ds</a>.now().text();</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  tstring += 11; <span class="comment">// skip the date</span></div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  tstring += 11; <span class="comment">//&lt; skip the date, just use the time</span></div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;  ftoa(flow, str1);</div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;  ftoa(temp, str3);</div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;  ftoa(maxtemp, str2);</div>
@@ -235,10 +235,12 @@ Functions</h2></td></tr>
 
 <p>Initialize the LoRa radio. </p>
 <p>This function turns on the radio, sets the frequency, and prepares it for use. It does not take any parameters. </p>
+<p>Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on</p>
+<p>The default transmitter power is 13dBm, using PA_BOOST. If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then you can set transmitter powers from 5 to 23 dBm:</p>
 
 <p class="definition">Definition at line <a class="el" href="lora_8cpp_source.html#l00017">17</a> of file <a class="el" href="lora_8cpp_source.html">lora.cpp</a>.</p>
 <div class="fragment"><div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;{</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, LOW); <span class="comment">// enable LoRa</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, LOW); <span class="comment">//&lt; enable LoRa</span></div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;  pinMode(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a9cd34561d6acfeed85d0245d83752c82">RFM95_RST</a>, OUTPUT);</div>
 <div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a9cd34561d6acfeed85d0245d83752c82">RFM95_RST</a>, HIGH);</div>
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160; </div>
@@ -263,13 +265,8 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  }</div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;  Serial.print(<span class="stringliteral">&quot;Set Freq to: &quot;</span>); Serial.println(<a class="code" href="lora_8h.html#a2240e28a2e7f70d896b1a46ea3c5ce39">RF95_FREQ</a>);</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  </div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;  <span class="comment">// Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;  <span class="comment">// The default transmitter power is 13dBm, using PA_BOOST.</span></div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;  <span class="comment">// If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then </span></div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;  <span class="comment">// you can set transmitter powers from 5 to 23 dBm:</span></div>
 <div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;  rf95.setTxPower(23, <span class="keyword">false</span>);</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, HIGH); <span class="comment">// disable LoRa</span></div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, HIGH); <span class="comment">//&lt; disable LoRa</span></div>
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;}</div>
 </div><!-- fragment -->
 </div>
@@ -295,8 +292,8 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="lora_8cpp_source.html#l00083">83</a> of file <a class="el" href="lora_8cpp_source.html">lora.cpp</a>.</p>
 <div class="fragment"><div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;{</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, LOW); <span class="comment">// enable LoRa</span></div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;  Serial.println(<span class="stringliteral">&quot;Transmitting...&quot;</span>); <span class="comment">// Send a message to rf95_server</span></div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, LOW); <span class="comment">//&lt; enable LoRa</span></div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;  Serial.println(<span class="stringliteral">&quot;Transmitting...&quot;</span>); <span class="comment">//&lt; Send a message to rf95_server</span></div>
 <div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;  <span class="comment">// Send a message to manager_server</span></div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;  <span class="keywordflow">if</span> (manager.sendtoWait((uint8_t *)radiopacket, packet_len, <a class="code" href="lora_8h.html#aa6cecb8c404241c624e83aee8a3979d2">SERVER_ADDRESS</a>))</div>
 <div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;  {</div>
@@ -319,14 +316,14 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;  <span class="keywordflow">else</span></div>
 <div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    Serial.println(<span class="stringliteral">&quot;sendtoWait failed&quot;</span>);</div>
 <div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160; </div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, HIGH); <span class="comment">// disable LoRa</span></div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;  digitalWrite(<a class="code" href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a>, HIGH); <span class="comment">//&lt; disable LoRa</span></div>
 <div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;}</div>
 </div><!-- fragment -->
 </div>
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
-<div class="ttc" id="aschedule_8h_html_a4c06781bd70442b43eec7c92d3e7ea3a"><div class="ttname"><a href="schedule_8h.html#a4c06781bd70442b43eec7c92d3e7ea3a">rtc_ds</a></div><div class="ttdeci">static RTC_DS3231 rtc_ds</div><div class="ttdoc">Instance of our real-time clock.</div><div class="ttdef"><b>Definition:</b> <a href="schedule_8h_source.html#l00010">schedule.h:10</a></div></div>
+<div class="ttc" id="aschedule_8h_html_a4c06781bd70442b43eec7c92d3e7ea3a"><div class="ttname"><a href="schedule_8h.html#a4c06781bd70442b43eec7c92d3e7ea3a">rtc_ds</a></div><div class="ttdeci">static RTC_DS3231 rtc_ds</div><div class="ttdoc">Instance of our real-time clock.</div><div class="ttdef"><b>Definition:</b> <a href="schedule_8h_source.html#l00011">schedule.h:11</a></div></div>
 <div class="ttc" id="apinout_8h_html_ad3ebeb23ad60165264117c8103271e91a9cd34561d6acfeed85d0245d83752c82"><div class="ttname"><a href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a9cd34561d6acfeed85d0245d83752c82">RFM95_RST</a></div><div class="ttdeci">@ RFM95_RST</div><div class="ttdoc">Reset pin used for LoRa. Output. Active-low?</div><div class="ttdef"><b>Definition:</b> <a href="pinout_8h_source.html#l00029">pinout.h:29</a></div></div>
 <div class="ttc" id="alora_8h_html_a2240e28a2e7f70d896b1a46ea3c5ce39"><div class="ttname"><a href="lora_8h.html#a2240e28a2e7f70d896b1a46ea3c5ce39">RF95_FREQ</a></div><div class="ttdeci">#define RF95_FREQ</div><div class="ttdoc">Radio frequency (in MHz).</div><div class="ttdef"><b>Definition:</b> <a href="lora_8h_source.html#l00014">lora.h:14</a></div></div>
 <div class="ttc" id="apinout_8h_html_ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48"><div class="ttname"><a href="pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48">RFM95_CS</a></div><div class="ttdeci">@ RFM95_CS</div><div class="ttdoc">SPI chip select used for LoRa. Output, Active-low.</div><div class="ttdef"><b>Definition:</b> <a href="pinout_8h_source.html#l00028">pinout.h:28</a></div></div>

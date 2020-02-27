@@ -16,6 +16,9 @@ var pinout_8h =
       [ "SPI_MISO", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a4db1f29a4b23def8195011b407d61189", null ],
       [ "TX", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a951f819598b53b2729ee0e4c05e6888e", null ],
       [ "RX", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a4aca20d6e60fffb66e9668b3a6592531", null ],
+      [ "UPPER_CS", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91aa58b078247ffcf6ff61798989435ad45", null ],
+      [ "LOWER_CS", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a69589f542cdf78712c60ec36d147a0c2", null ],
+      [ "HEATER_CS", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a732fb526fc16be2e7fac935816f8f752", null ],
       [ "RFM95_CS", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a1abe8e017ead2df3bf6976ab2f9d1a48", null ],
       [ "RFM95_RST", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a9cd34561d6acfeed85d0245d83752c82", null ],
       [ "RFM95_INT", "pinout_8h.html#ad3ebeb23ad60165264117c8103271e91a4b48a2ee794cf813ea6cac59ec5183bf", null ]

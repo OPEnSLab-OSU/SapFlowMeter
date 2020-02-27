@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['lora_2eh_62',['lora.h',['../lora_8h.html',1,'']]]
+  ['debug_2ecpp_89',['debug.cpp',['../debug_8cpp.html',1,'']]],
+  ['debug_2eh_90',['debug.h',['../debug_8h.html',1,'']]]
 ];

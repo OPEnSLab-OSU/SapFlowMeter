@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['loop_75',['loop',['../sapflow__protothread_8ino.html#afe461d27b9c48d5921c00d521181f12f',1,'sapflow_protothread.ino']]],
-  ['lora_5finit_76',['lora_init',['../lora_8h.html#a5406703a916059feeaac0ce650e6ceb7',1,'lora.cpp']]]
+  ['feather_5fsleep_110',['feather_sleep',['../schedule_8cpp.html#ae74e924bdba3f5da2de33ca0c67a1fa2',1,'feather_sleep(void):&#160;schedule.cpp'],['../schedule_8h.html#ae74e924bdba3f5da2de33ca0c67a1fa2',1,'feather_sleep(void):&#160;schedule.cpp']]]
 ];

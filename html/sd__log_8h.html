@@ -179,18 +179,21 @@ static SdFat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the new filename it came up with. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="sd__log_8cpp_source.html#l00003">3</a> of file <a class="el" href="sd__log_8cpp_source.html">sd_log.cpp</a>.</p>
-<div class="fragment"><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;                                             {</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;  String temp = fname + suffix;</div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;  <span class="keywordtype">int</span> i = 0;</div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;  <span class="keywordflow">while</span>(<a class="code" href="sd__log_8h.html#a15e6b7e1f0fb2d1e0fe1654721bb5302">sd</a>.exists(temp.c_str())){</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    ++i;</div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <span class="keywordtype">char</span> ones = i%10 + <span class="charliteral">&#39;0&#39;</span>;</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <span class="keywordtype">char</span> tens = i/10 + <span class="charliteral">&#39;0&#39;</span>;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    temp = fname + <span class="charliteral">&#39;(&#39;</span> + tens + ones + <span class="charliteral">&#39;)&#39;</span> + suffix;</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;  }</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;  <span class="keywordflow">return</span> temp;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;}</div>
+<p class="definition">Definition at line <a class="el" href="sd__log_8cpp_source.html#l00005">5</a> of file <a class="el" href="sd__log_8cpp_source.html">sd_log.cpp</a>.</p>
+<div class="fragment"><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;                                             {</div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;  String temp = fname + suffix; <span class="comment">//&lt; Start with the name provided</span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;  <span class="keywordtype">int</span> i = 0;</div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;  <span class="comment">// Try appending a number</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;  <span class="keywordflow">while</span>(<a class="code" href="sd__log_8h.html#a15e6b7e1f0fb2d1e0fe1654721bb5302">sd</a>.exists(temp.c_str())){</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// If the first number didn&#39;t work, keep trying</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="comment">// Note that this will hang if 00 through 99 are all taken</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    ++i;</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="keywordtype">char</span> ones = i%10 + <span class="charliteral">&#39;0&#39;</span>;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="keywordtype">char</span> tens = i/10 + <span class="charliteral">&#39;0&#39;</span>;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    temp = fname + <span class="charliteral">&#39;(&#39;</span> + tens + ones + <span class="charliteral">&#39;)&#39;</span> + suffix;</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;  }</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;  <span class="keywordflow">return</span> temp;</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;}</div>
 </div><!-- fragment -->
 </div>
 </div>
