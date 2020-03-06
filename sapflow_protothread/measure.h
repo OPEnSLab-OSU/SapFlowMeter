@@ -3,7 +3,6 @@
 #include "pinout.h"
 #include "schedule.h"
 #include "sd_log.h"
-#include "debug.h"
 #include <Adafruit_MAX31865.h>
 
 /** @file */

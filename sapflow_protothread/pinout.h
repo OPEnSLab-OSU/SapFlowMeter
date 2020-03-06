@@ -34,3 +34,5 @@ enum pinout{
 #define PT_USE_TIMER
 #define PT_USE_SEM
 #include <pt.h>
+
+#include <FeatherFault.h>

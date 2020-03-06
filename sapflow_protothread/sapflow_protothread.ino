@@ -14,7 +14,7 @@ void setup() {
   digitalWrite(HEATER, LOW);
   Serial.begin(115200);
   Serial.println("Serial connected");
-  halt_location.init(2000);
+  FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_2S);
   //Initialize the Threads
   PT_INIT(&sched_thd);
   PT_INIT(&measure_thd);

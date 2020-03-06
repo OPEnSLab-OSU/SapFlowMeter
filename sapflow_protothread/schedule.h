@@ -4,7 +4,6 @@
 #include <LowPower.h>
 #include "pinout.h"
 #include "measure.h"
-#include "debug.h"
 
 static struct pt sched_thd;///< Protothread control structure for measure()
 

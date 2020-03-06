@@ -16,3 +16,5 @@ Currently we have designed flexible PCB probes, and we are testing our sap flow 
 - [DSPlite](https://github.com/kamocat/DSPlite)
 - [RadioHead](https://github.com/adafruit/RadioHead)
 - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [FeatherFault](https://github.com/OPEnSLab-OSU/FeatherFault)
+- [ASF core](https://github.com/adafruit/Adafruit_ASFcore.git) commit f6ffa8b
