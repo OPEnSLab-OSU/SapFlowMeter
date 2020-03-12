@@ -12,3 +12,9 @@ Currently we have designed flexible PCB probes, and we are testing our sap flow 
 - [OPEnS RTC](https://github.com/OPEnSLab-OSU/OPEnS_RTC "OPEnS_RTC")
 - [Adafruit MAX31865](https://github.com/adafruit/Adafruit_MAX31865 "Adafruit MAX31865")
 - [Low-Power](https://github.com/rocketscream/Low-Power "Low-Power")
+- [Protothreads](https://github.com/P4SSER8Y/ProtoThreadsForArduino)
+- [DSPlite](https://github.com/kamocat/DSPlite)
+- [RadioHead](https://github.com/adafruit/RadioHead)
+- [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [FeatherFault](https://github.com/OPEnSLab-OSU/FeatherFault)
+- [ASF core](https://github.com/adafruit/Adafruit_ASFcore.git) commit f6ffa8b
