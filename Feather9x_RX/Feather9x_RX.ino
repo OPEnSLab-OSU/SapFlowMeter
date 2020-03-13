@@ -4,67 +4,21 @@
 #include <RHReliableDatagram.h>
 #include <SPI.h>
 #include <RH_RF95.h>
-#include <Ethernet.h>
+#include <EthernetLarge.h>
 #include <ArduinoJson.h>
 #include <FeatherFault.h>
 
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
 
-/* for Feather32u4 RFM9x
-#define RFM95_CS 8
-#define RFM95_RST 4
-#define RFM95_INT 7
-*/
-
 /* for feather m0 RFM9x */
-#define RFM95_CS 8
-#define RFM95_RST 4
-#define RFM95_INT 3
-
-/* for shield 
-#define RFM95_CS 10
-#define RFM95_RST 9
-#define RFM95_INT 7
-*/
-
-/* Feather 32u4 w/wing
-#define RFM95_RST     11   // "A"
-#define RFM95_CS      10   // "B"
-#define RFM95_INT     2    // "SDA" (only SDA/SCL/RX/TX have IRQ!)
-*/
-
-/* Feather m0 w/wing 
-#define RFM95_RST     11   // "A"
-#define RFM95_CS      10   // "B"
-#define RFM95_INT     6    // "D"
-*/
-
-#if defined(ESP8266)
-  /* for ESP w/featherwing */ 
-  #define RFM95_CS  2    // "E"
-  #define RFM95_RST 16   // "D"
-  #define RFM95_INT 15   // "B"
-
-#elif defined(ESP32)  
-  /* ESP32 feather w/wing */
-  #define RFM95_RST     27   // "A"
-  #define RFM95_CS      33   // "B"
-  #define RFM95_INT     12   //  next to A
-
-#elif defined(NRF52)  
-  /* nRF52832 feather w/wing */
-  #define RFM95_RST     7   // "A"
-  #define RFM95_CS      11   // "B"
-  #define RFM95_INT     31   // "C"
-  
-#elif defined(TEENSYDUINO)
-  /* Teensy 3.x w/wing */
-  #define RFM95_RST     9   // "A"
-  #define RFM95_CS      10   // "B"
-  #define RFM95_INT     4    // "C"
-#endif
-
+enum pinout{
+  RFM95_CS = 8,
+  RFM95_RST = 4,
+  RFM95_INT = 3,
+  ETH_CS = 10, // Ethernet chip select
+  LED = 13,
+};
 
 // Change to 434.0 or other frequency, must match RX's freq!
 #define RF95_FREQ 915.0
@@ -74,9 +28,6 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 // Class to manage message delivery and receipt, using the driver declared above
 RHReliableDatagram manager(rf95, SERVER_ADDRESS);
-
-// Blinky on receipt
-#define LED 13
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -109,14 +60,18 @@ bool printWebData = true;  // set to false for better speed measurement
 
 void setup()
 {
-  FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_4S);
   MARK;
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
+  pinMode(RFM95_CS, OUTPUT);
+  pinMode(ETH_CS, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
+  digitalWrite(ETH_CS, HIGH);
 
   MARK;
   Serial.begin(115200);
+  while(!Serial);
+  FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_4S);
   delay(100);
 
   Serial.println("Feather LoRa RX Test!");
@@ -154,45 +109,11 @@ void setup()
   // you can set transmitter powers from 5 to 23 dBm:
   rf95.setTxPower(23, false);
   MARK;
-}
-
-uint8_t data[] = "And hello back to you";
-// Dont put this on the stack:
-uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-
-void loop()
-{
-  MARK;
-  if (manager.available())
-  {
-    MARK;
-    // Wait for a message addressed to us from the client
-    uint8_t len = sizeof(buf);
-    uint8_t from;
-    if (manager.recvfromAck(buf, &len, &from))
-    {
-      MARK;
-      digitalWrite(LED, HIGH);
-      Serial.print("got request from : 0x");
-      Serial.print(from, HEX);
-      Serial.print(": ");
-      Serial.println((char*)buf);
-      Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);
-      MARK;
-
-      // Send a reply back to the originator client
-      if (!manager.sendtoWait(data, sizeof(data), from))
-        Serial.println("sendtoWait failed"); MARK;
-      digitalWrite(LED, LOW);
-      MARK;
-    }
-  MARK;
-     // You can use Ethernet.init(pin) to configure the CS pin
+  digitalWrite(RFM95_CS, HIGH);
+  digitalWrite(ETH_CS, LOW);
+  // You can use Ethernet.init(pin) to configure the CS pin
   Ethernet.init(10);  // Most Arduino shields [including Feather M0]
-  pinMode(RFM95_RST, INPUT_PULLUP);
   MARK;
-
   Serial.println("Initialize Ethernet with DHCP:");
   if (Ethernet.begin(mac) == 0) {
     MARK;
@@ -219,6 +140,47 @@ void loop()
     Serial.println(Ethernet.localIP());
   }
   MARK;
+  digitalWrite(ETH_CS, HIGH);
+  digitalWrite(RFM95_CS, LOW);
+}
+
+uint8_t data[] = "And hello back to you";
+// Dont put this on the stack:
+uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+
+void loop()
+{
+  digitalWrite(RFM95_CS, HIGH);
+  digitalWrite(ETH_CS, LOW);
+  MARK;
+  if (manager.available())
+  {
+    MARK;
+    // Wait for a message addressed to us from the client
+    uint8_t len = sizeof(buf);
+    uint8_t from;
+    if (manager.recvfromAck(buf, &len, &from))
+    {
+      MARK;
+      digitalWrite(LED, HIGH);
+      Serial.print("got request from : 0x");
+      Serial.print(from, HEX);
+      Serial.print(": ");
+      Serial.println((char*)buf);
+      Serial.print("RSSI: ");
+      Serial.println(rf95.lastRssi(), DEC);
+      MARK;
+
+      // Send a reply back to the originator client
+      if (!manager.sendtoWait(data, sizeof(data), from))
+        Serial.println("sendtoWait failed"); MARK;
+      digitalWrite(LED, LOW);
+      MARK;
+    }
+  MARK;
+  digitalWrite(ETH_CS, HIGH);
+  digitalWrite(RFM95_CS, LOW);
+
     delay(1000);
   MARK;
   Serial.print("connecting to ");
