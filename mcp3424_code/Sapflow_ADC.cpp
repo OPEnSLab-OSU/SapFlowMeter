@@ -38,9 +38,10 @@ int get_temp(struct pt *pt, uint8_t i2c_addr, struct temperature *dest){
 }
 
 double rtd_calc(int32_t raw){
-  double result = (415.25 * raw + 151000000.0) 
-    / (0.246125 * raw - 540580.0) - 279.3296;
-  return(result);
+  double volts = -raw * (2.048 / (1UL<<20)); // Vref is 2.048, 17 bits, PGA is 8
+  double ratio = volts * (7.04 / 5.0); // 5V supply, voltage divider using 604-ohm resistor (and 100-ohm RTD)
+  double celcius = ratio * (1/3850e-6); // 3850ppm/K is standard for platinum RTD
+  return(celcius);
 }
 
 int32_t measure(uint8_t addr, uint8_t ch){
