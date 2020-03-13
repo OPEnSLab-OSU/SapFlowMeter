@@ -25,7 +25,7 @@ int get_temp(struct pt *pt, uint8_t i2c_addr, struct temperature *dest){
 
     /* turn raw readings into temperatures */
     uint8_t i;
-    for(i=0;i<2;i++){
+    for(i=0;i<3;i++){
         deg_c[i] = rtd_calc(result[i]);
     }
     
