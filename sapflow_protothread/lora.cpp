@@ -72,7 +72,7 @@ void build_msg(float flow, char * weight, float temp, float maxtemp)
   doc["weight"].set("0");
   doc["temp"].set(str3);
   doc["maxtemp"].set(str2);
-  doc["id"].set("0");
+  doc["id"].set("2");
   doc["time"].set(tstring);
   packet_len = serializeJson(doc,radiopacket);
   Serial.println(radiopacket);

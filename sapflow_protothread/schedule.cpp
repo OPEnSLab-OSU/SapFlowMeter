@@ -101,11 +101,11 @@ int schedule(struct pt *pt)
     digitalWrite(HEATER, HIGH);MARK; //< Turn on the heater
     Serial.print("Heater On at ");MARK;
     Serial.println(rtc_ds.now().text());MARK;
-    PT_TIMER_DELAY(pt,6000);MARK; //< Heater is on for 6 seconds
+    PT_TIMER_DELAY(pt,3000);MARK; //< Heater is on for 3 seconds
     digitalWrite(HEATER, LOW);MARK; //< Turn off the heater
     Serial.print("Heater Off at ");MARK;
     Serial.println(rtc_ds.now().text());MARK;
-    PT_TIMER_DELAY(pt,100);MARK;  //< Wait for heat to propagate
+    PT_TIMER_DELAY(pt,100*1000);MARK;  //< Wait for heat to propagate
     Serial.println("Temperature probably reached plateau");MARK;
     PT_WAIT_THREAD(pt, delta());MARK; //<Calculate the sapflow
     Serial.println("Finished logging");MARK;
