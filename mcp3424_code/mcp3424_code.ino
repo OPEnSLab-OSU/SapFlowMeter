@@ -8,6 +8,10 @@ struct pt * pt;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(6, OUTPUT);
+  pinMode(5, OUTPUT);
+  digitalWrite(5, LOW);
+  digitalWrite(6, HIGH);
   get_temp(pt, addr, &baseline);
 }
 
