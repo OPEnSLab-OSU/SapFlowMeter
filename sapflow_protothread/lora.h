@@ -30,11 +30,11 @@ Builds a JSON string containing sapflow, weight, temperature, time, and tree ID.
 The string is stored in a global variable to be read by send_msg()
 
 @param flow The calculated sapflow
-@param weight The text received from the scale. Use "0" if scale is not connected.
 @param temp The baseline temperature of the tree
 @param time The date and time from the Real-Time Clock
+@param treeID the tree identification number
 */
-void build_msg(float flow, char * weight, float temp, float maxtemp);
+void build_msg(float flow, float temp, float maxtemp, int treeID=0);
 
 /**
 Sends a LoRa packet to the base station.
