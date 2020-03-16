@@ -40,16 +40,3 @@ This function internally calls feather_sleep() to handle prep and resume from sl
 @param interval The increment to sleep for.
 */
 void sleep_cycle( int interval = 5 );
-
-/** Controls general measurement schedule.
-
-This is the schedule:
-1. Measure temperature of tree (before heat is applied)
-2. Apply heat pulse
-3. Wait for the peak of the heat to reach the upper and lower probes.
-4. Measure the sap flow
-5. Sleep until next measurement cycle
-@param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
-@returns the status of the protothread (Waiting, yeilded, exited, or ended)
-*/
-int schedule(struct pt *pt = &sched_thd);

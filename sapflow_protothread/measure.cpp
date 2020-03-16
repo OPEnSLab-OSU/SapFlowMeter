@@ -20,19 +20,19 @@ int measure(struct pt *pt, struct measure_stack &m)
   // Validate the I2C address
   m.addr = (0b1101<<3) | (m.addr & 0b111);
   // Wait for 1 second to elapse
-  if( (millis() - m.pt.t) > 0 ){
-    PT_WAIT_UNTIL(&m.pt, (millis()-m.pt.t)>=1000);
+  if( (millis() - pt->t) > 0 ){
+    PT_WAIT_UNTIL(pt, (millis()-pt->t)>=1000);
   }
-  m.pt.t = millis();
+  pt->t = millis();
 
   /* read from ch1 - heater */
-  PT_SPAWN(&m.pt, &m.child, mcp3424_measure(&m.child,m.addr,1,m.raw[0]));
+  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,1,m.raw[0]));
 
   /* read from ch2 - bottom */
-  PT_SPAWN(&m.pt, &m.child, mcp3424_measure(&m.child,m.addr,2,m.raw[1]));
+  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,2,m.raw[1]));
 
   /* read from ch4 - top    */
-  PT_SPAWN(&m.pt, &m.child, mcp3424_measure(&m.child,m.addr,4,m.raw[2]));
+  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,4,m.raw[2]));
   m.raw[2] = -m.raw[2]; // input wires on ch4 are backwards
 
   /* turn raw readings into temperatures */
@@ -60,7 +60,7 @@ int measure(struct pt *pt, struct measure_stack &m)
   logfile << setw(6) << m.latest.heater << endl; MARK;
   logfile.close();  MARK;//< Ensure the file is closed
   // Loop to the beginning
-  PT_RESTART(&m.pt);
+  PT_RESTART(pt);
   PT_END(pt);
 }
 
@@ -102,7 +102,7 @@ int delta(struct pt *pt, struct measure_stack &m)
     In order to get a smoother result, we are takng the average of this calculation over a period of 40 seconds. Burges et. al. (2001) suggests that this value should converge.
   */
   for(m.i = 0; m.i < 40; ++(m.i) ){ MARK;
-    PT_SEM_WAIT(&m.sem);
+    PT_SEM_WAIT(pt, &m.sem);
     // Ratio of upper delta over lower delta
     double udelt = m.latest.upper - m.reference.upper;
     double ldelt = m.latest.lower - m.reference.lower;

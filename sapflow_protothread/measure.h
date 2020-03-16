@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pinout.h"
-#include "schedule.h"
+#include "sleep.h"
 #include "sd_log.h"
 
 /** @file */
@@ -29,11 +29,12 @@ struct measure_stack{
   int32_t raw[3]; ///< Stores raw readout from ADC
   uint8_t addr;   ///< I2C address of this ADC
   struct pt child; ///< Control structure for mcp3424_measure()
+  int treeID; ///< Identification number of this tree
 };
 
 /** Captures a measurement from the three probes.
 
-This is a protothread that reads the temperature from three RTD amplifiers connected to the probes in the tree. It stores the result in the global variable "latest", and logs to the SD card.
+This is a protothread that reads the temperature from three RTD amplifiers connected to the probes in the tree. It stores the result in the struct paramter "latest" and logs to the SD card.
 
 @param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
