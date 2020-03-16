@@ -1,103 +1,95 @@
 #include "measure.h"
 #include "lora.h"
 
+#include <Wire.h>
+
+/// Bitmasks for the MCP3424 status/control register
+enum register_mask{
+  RDY=1<<7,  ///< result ready
+  CHAN=3<<5, ///< Channel 0-3
+  CON=1<<4,  ///< Continuous/One-Shot
+  DEPTH=3<<2,  ///< Bit depth 12-18
+  PGA=3<<0,   ///< Gain of 1-8
+};
+
 /// @file
 
-float maxtemp; //< Used to store the max heater temperature
-
-int sample_timer(struct pt *pt)
+int measure(struct pt *pt, struct measure_stack &m)
 {
   PT_BEGIN(pt);
-  Serial.println("Initialized timer thread");
-  while(1)
-  {
-    sample_trigger = true;
-    PT_YIELD(pt); //< Give everyone a chance to see the trigger
-    sample_trigger = false; //< Clear the trigger
-    PT_TIMER_DELAY(pt,1000); //< Sample every 1000ms
+  // Validate the I2C address
+  m.addr = (0b1101<<3) | (m.addr & 0b111);
+  // Wait for 1 second to elapse
+  if( (millis() - m.pt.t) > 0 ){
+    PT_WAIT_UNTIL(&m.pt, (millis()-m.pt.t)>=1000);
   }
-  PT_END(pt);
-}
+  m.pt.t = millis();
 
-int measure(struct pt *pt)
-{
-  PT_BEGIN(pt);
-  Serial.print("Initializing measurement thread... ");
-  static Adafruit_MAX31865 upper_rtd = Adafruit_MAX31865(UPPER_CS);
-  static Adafruit_MAX31865 lower_rtd = Adafruit_MAX31865(LOWER_CS);
-  static Adafruit_MAX31865 heater_rtd = Adafruit_MAX31865(HEATER_CS);
-  upper_rtd.begin(MAX31865_2WIRE);
-  lower_rtd.begin(MAX31865_2WIRE);
-  heater_rtd.begin(MAX31865_2WIRE);
-  Serial.println("Done");
-  PT_YIELD(pt);
-  while(1)
-  {      
-    // Wait for next sample trigger
-    PT_WAIT_UNTIL(pt, sample_trigger );
-    PT_WAIT_WHILE(pt, sample_trigger);
-    // Get the latest temperature
-    MARK;
-    latest.upper = upper_rtd.temperature(Rnom, Rref); MARK;
-    latest.lower = lower_rtd.temperature(Rnom, Rref); MARK;
-    latest.heater = heater_rtd.temperature(Rnom, Rref); MARK;
-    maxtemp = max(latest.upper, maxtemp); MARK;
-    maxtemp = max(latest.lower, maxtemp); MARK;
-    maxtemp = max(latest.heater, maxtemp); MARK;
-    DateTime t = rtc_ds.now(); MARK;
-    // Print to Serial terminal
-    cout << "Upper: " << latest.upper << " Lower: "; MARK;
-    cout << latest.lower << " Heater: " <<latest.heater; MARK;
-    cout << " Time: " << t.text() << endl; MARK;
-    // Save calculated sapflow
-    ofstream logfile = ofstream("demo_log.csv", 
-        ios::out | ios::app ); MARK;
-    logfile << t.text() << ", "; MARK;
-    logfile << setw(6) << latest.upper << ", "; MARK;
-    logfile << setw(6) << latest.lower << ", "; MARK;
-    logfile << setw(6) << latest.heater << endl; MARK;
-    logfile.close();  MARK;//< Ensure the file is closed
-  }
+  /* read from ch1 - heater */
+  PT_SPAWN(&m.pt, &m.child, mcp3424_measure(&m.child,m.addr,1,m.raw[0]));
+
+  /* read from ch2 - bottom */
+  PT_SPAWN(&m.pt, &m.child, mcp3424_measure(&m.child,m.addr,2,m.raw[1]));
+
+  /* read from ch4 - top    */
+  PT_SPAWN(&m.pt, &m.child, mcp3424_measure(&m.child,m.addr,4,m.raw[2]));
+  m.raw[2] = -m.raw[2]; // input wires on ch4 are backwards
+
+  /* turn raw readings into temperatures */
+  m.latest.heater = rtd_calc(m.raw[0]);
+  m.latest.lower = rtd_calc(m.raw[1]);
+  m.latest.upper = rtd_calc(m.raw[2]);
+  // Set the binary semaphore
+  m.sem.count = 1;
+  
+  //Log to the SD card
+  m.maxtemp = max(m.latest.upper, m.maxtemp); MARK;
+  m.maxtemp = max(m.latest.lower, m.maxtemp); MARK;
+  m.maxtemp = max(m.latest.heater, m.maxtemp); MARK;
+  DateTime t = rtc_ds.now(); MARK;
+  // Print to Serial terminal
+  cout << "Upper: " << m.latest.upper << " Lower: "; MARK;
+  cout << m.latest.lower << " Heater: " <<m.latest.heater; MARK;
+  cout << " Time: " << t.text() << endl; MARK;
+  // Save calculated sapflow
+  ofstream logfile = ofstream("demo_log.csv", 
+      ios::out | ios::app ); MARK;
+  logfile << t.text() << ", "; MARK;
+  logfile << setw(6) << m.latest.upper << ", "; MARK;
+  logfile << setw(6) << m.latest.lower << ", "; MARK;
+  logfile << setw(6) << m.latest.heater << endl; MARK;
+  logfile.close();  MARK;//< Ensure the file is closed
+  // Loop to the beginning
+  PT_RESTART(&m.pt);
   PT_END(pt);
 }
 
 // Calculates baseline temperature
-int baseline(struct pt *pt)
+int baseline(struct pt *pt, struct measure_stack &m)
 {
   PT_BEGIN(pt);MARK;
-  Serial.print("Initializing baseline thread... ");
-  // Declare persistant variable for this thread
-  static int i;
   // Initialize the baseline (reference) temperature
-  reference.upper = 0;
-  reference.lower = 0;
-  maxtemp = -300; //< Any temperature should be greater than this.
-  Serial.println("Done");
+  m.reference.upper = 0;
+  m.reference.lower = 0;
+  m.maxtemp = -300; //< Any temperature should be greater than this.
   // Take an average over the first 10 seconds
-  for(i = 0; i < 10; ++i){ MARK;
-    PT_WAIT_UNTIL(pt, sample_trigger); MARK;
-    PT_WAIT_WHILE(pt, sample_trigger); MARK;
-    reference.upper += latest.upper;
-    reference.lower += latest.lower;
+  for(m.i = 0; m.i < 10; ++(m.i)){ MARK;
+    PT_SEM_WAIT(pt, &m.sem);
+    m.reference.upper += m.latest.upper;
+    m.reference.lower += m.latest.lower;
   }; MARK;
-  reference.upper /= i;
-  reference.lower /= i; MARK;
-  cout<<"Baseline: "<<reference.upper<<", "<<reference.lower<<endl; MARK;
+  m.reference.upper /= m.i;
+  m.reference.lower /= m.i; MARK;
+  cout<<"Baseline: "<<m.reference.upper<<", "<<m.reference.lower<<endl; MARK;
   PT_END(pt);
 }
 
-
 // Calculates temperature delta and sapflow
-int delta(struct pt *pt)
+int delta(struct pt *pt, struct measure_stack &m)
 {
   PT_BEGIN(pt);MARK;
-  Serial.print("Initializing delta thread... ");
-  // Declare persistent variables for this thread
-  static int i;
-  static float flow;
   // Initialize the flow value
-  flow = 0;
-  Serial.println("Done");
+  m.flow = 0;
   /** We compute sapflow using the following formula::
     sapflow = k / x * log(v1 / v2) / 3600
 
@@ -109,36 +101,76 @@ int delta(struct pt *pt)
 
     In order to get a smoother result, we are takng the average of this calculation over a period of 40 seconds. Burges et. al. (2001) suggests that this value should converge.
   */
-  for(i = 0; i < 40; ++i ){ MARK;
-    PT_WAIT_UNTIL(pt, sample_trigger); MARK;
-    PT_WAIT_WHILE(pt, sample_trigger); MARK;
+  for(m.i = 0; m.i < 40; ++(m.i) ){ MARK;
+    PT_SEM_WAIT(&m.sem);
     // Ratio of upper delta over lower delta
-    float udelt = latest.upper - reference.upper;
-    float ldelt = latest.lower - reference.lower;
+    double udelt = m.latest.upper - m.reference.upper;
+    double ldelt = m.latest.lower - m.reference.lower;
     cout << "Delta: " << udelt <<", " << ldelt << endl; MARK;
     // Take the average before the log, since this ratio should converge
-    flow += udelt / ldelt;
+    m.flow += udelt / ldelt;
   }; MARK;
   cout<<"Finished measurements."<<endl; MARK;
-  flow /= i; MARK;
+  m.flow /= m.i; MARK;
   // Complete the rest of the equation
-  flow = log(flow) * (3600.*2e-6/7e-3); MARK;
+  m.flow = log(m.flow) * (3600.*2e-6/7e-3); MARK;
   // Print the result
-  cout<<"Flow is "<<flow<<endl; MARK;
+  cout<<"Flow is "<<m.flow<<endl; MARK;
   // Write the sapflow to the file.
   ofstream sapfile = ofstream("demo.csv", ios::out | ios::app); MARK;
   char * time = rtc_ds.now().text(); MARK;
   cout << time << ", "; MARK;
-  cout << reference.upper << ", "; MARK;
-  cout << reference.lower << ", "; MARK;
-  cout << flow << ", " << endl; MARK;
-  sapfile << time << ", "<< reference.upper << ", "; MARK;
-  sapfile << reference.lower << ", "<< flow << ", "<< endl; MARK;
+  cout << m.reference.upper << ", "; MARK;
+  cout << m.reference.lower << ", "; MARK;
+  cout << m.flow << ", " << endl; MARK;
+  sapfile << time << ", "<< m.reference.upper << ", "; MARK;
+  sapfile << m.reference.lower << ", "<< m.flow << ", "<< endl; MARK;
   sapfile.close(); MARK;
   // Send the data over LoRa
   lora_init(); MARK;
-  build_msg(flow, "0", reference.upper, maxtemp); MARK;
+  build_msg(m.flow, m.reference.upper, m.maxtemp, m.treeID); MARK;
   send_msg(); MARK;
   
   PT_END(pt);
+}
+
+double rtd_calc(int32_t raw){
+  double volts = -raw * (2.048 / (1UL<<20)); // Vref is 2.048, 17 bits, PGA is 8
+  double ratio = volts * (7.04 / 5.0); // 5V supply, voltage divider using 604-ohm resistor (and 100-ohm RTD)
+  double celcius = ratio * (1/3850e-6); // 3850ppm/K is standard for platinum RTD
+  return(celcius);
+}
+
+int mcp3424_measure(struct pt * pt, uint8_t addr, uint8_t ch, int32_t &result){
+    PT_BEGIN(pt);
+    uint8_t cfg = RDY | DEPTH | PGA;  //18-bit depth, 8x PGA gain
+    int32_t data = 0;
+    --ch; // Change from 1-4 to 0-3
+    ch = CHAN & (ch<<5);
+    cfg |= ch;
+    // Start the conversion
+    Wire.beginTransmission(addr);
+    Wire.write(cfg);
+    Wire.endTransmission();
+
+    // Wait for the result
+    // 1/3.75Hz = 267ms
+    PT_TIMER_DELAY(pt,260);
+    do{
+      PT_TIMER_DELAY(pt,5);
+      Wire.requestFrom(addr,4);
+      data = Wire.read(); // top two bits
+      data <<= 8;
+      data |= Wire.read(); // middle byte
+      data <<= 8;
+      data |= Wire.read(); // lower byte
+      cfg = Wire.read();
+    }while(cfg & RDY);
+
+    // Extend the sign
+    if( data & 0x20000 ){
+      data |= 0xFFFC0000;
+    }
+    result = data;
+    PT_END(pt);
 }

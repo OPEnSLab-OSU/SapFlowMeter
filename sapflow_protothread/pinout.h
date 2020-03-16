@@ -36,3 +36,13 @@ enum pinout{
 #include <pt.h>
 
 #include <FeatherFault.h>
+
+/** Initializes the hardware.
+ *
+ * Used at startup or when waking from sleep */
+void hardware_init(void);
+
+/** De-initializes hardware
+ *
+ * Used before sleeping to save power*/
+void hardware_deinit(void);

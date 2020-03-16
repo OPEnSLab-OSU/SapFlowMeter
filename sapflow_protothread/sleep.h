@@ -3,13 +3,8 @@
 #include <OPEnS_RTC.h>
 #include <LowPower.h>
 #include "pinout.h"
-#include "measure.h"
-
-static struct pt sched_thd;///< Protothread control structure for measure()
 
 static RTC_DS3231 rtc_ds; ///< Instance of our real-time clock
-
-static bool sleep; ///< Global flag to prep for sleep
 
 /** @file */
 

@@ -55,7 +55,7 @@ static int16_t packetnum = 0;  //< packet counter, we increment per xmission
 static char radiopacket[RH_RF95_MAX_MESSAGE_LEN];
 static uint8_t packet_len; //< Max message length is 251, so we won't overflow
 
-void build_msg(float flow, char * weight, float temp, float maxtemp)
+void build_msg(float flow, float temp, float maxtemp, int treeID )
 {
   Serial.print("Building message...");
   const int capacity=JSON_OBJECT_SIZE(10);
@@ -69,10 +69,9 @@ void build_msg(float flow, char * weight, float temp, float maxtemp)
   ftoa(temp, str3);
   ftoa(maxtemp, str2);
   doc["flow"].set(str1);
-  doc["weight"].set("0");
   doc["temp"].set(str3);
   doc["maxtemp"].set(str2);
-  doc["id"].set("2");
+  doc["id"].set(treeID);
   doc["time"].set(tstring);
   packet_len = serializeJson(doc,radiopacket);
   Serial.println(radiopacket);

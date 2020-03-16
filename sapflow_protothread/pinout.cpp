@@ -1,0 +1,39 @@
+#include "pinout.h"
+#include "sd_log.h"
+
+void hardware_init(void){
+  pinMode(HEATER, OUTPUT);
+  digitalWrite(HEATER, LOW);
+  Serial.begin(115200);
+  Serial.println("Serial connected");
+  FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_2S);
+  pinMode(EN_3v3, OUTPUT);
+  pinMode(EN_5v, OUTPUT);
+  pinMode(I2C_SCL, INPUT_PULLUP);
+  pinMode(I2C_SDA, INPUT_PULLUP);
+  pinMode(RFM95_CS, OUTPUT);
+  digitalWrite(RFM95_CS, HIGH); //< disable LoRa until we're ready to use
+  digitalWrite(STATUS_LED, HIGH);
+  digitalWrite(EN_3v3, LOW); 
+  digitalWrite(EN_5v, HIGH);
+  pinMode(SPI_SCK, OUTPUT);
+  pinMode(SPI_MOSI, OUTPUT);
+  pinMode(SD_CS, OUTPUT);
+  sd.begin(SD_CS, SD_SCK_MHZ(1));
+}
+
+void hardware_deinit(void){
+  // Disable SPI to save power
+  pinMode(SPI_SCK, INPUT);
+  pinMode(SPI_MOSI, INPUT);
+  pinMode(SD_CS, INPUT);
+  // Turn off power rails
+  digitalWrite(EN_3v3, HIGH); 
+  digitalWrite(EN_5v, LOW);
+  digitalWrite(STATUS_LED, LOW);MARK;
+  Serial.println("Sleeping");
+  FeatherFault::StopWDT();
+  // Prep for sleep
+  Serial.end();
+  USBDevice.detach();
+}
