@@ -12,7 +12,7 @@ void setup() {
   digitalWrite(6, HIGH);
   PT_INIT(&gt.pt);
   PT_INIT(&graph_thd);
-  gt.addr = 0x6E;
+  gt.addr = 0x6D;
   PT_SEM_INIT(&gt.sem, 0);
 }
 
@@ -20,11 +20,11 @@ int graph(struct pt * pt, struct pt_sem * sem){
   PT_BEGIN(pt);
   PT_SEM_WAIT(pt, sem);
   Serial.print("Upper:");
-  Serial.print(gt.deg_c[0]);
+  Serial.print(gt.deg_c[2]);
   Serial.print(",Lower:");
   Serial.print(gt.deg_c[1]);
   Serial.print(",Heater:");
-  Serial.print(gt.deg_c[2]);
+  Serial.println(gt.deg_c[0]);
   PT_RESTART(pt);
   PT_END(pt);
 }
