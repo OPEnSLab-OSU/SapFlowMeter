@@ -1,7 +1,4 @@
 #include "measure.h"
-#include "lora.h"
-
-#include <Wire.h>
 
 /// Bitmasks for the MCP3424 status/control register
 enum register_mask{
@@ -34,7 +31,7 @@ int measure(struct pt *pt, struct measure_stack &m)
   /* read from ch4 - top    */
   PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,4,m.raw[2]));
   m.raw[2] = -m.raw[2]; // input wires on ch4 are backwards
-
+  MARK;
   /* turn raw readings into temperatures */
   m.latest.heater = rtd_calc(m.raw[0]);
   m.latest.lower = rtd_calc(m.raw[1]);
@@ -48,11 +45,14 @@ int measure(struct pt *pt, struct measure_stack &m)
   m.maxtemp = max(m.latest.heater, m.maxtemp); MARK;
   DateTime t = rtc_ds.now(); MARK;
   // Print to Serial terminal
-  cout << "Upper: " << m.latest.upper << " Lower: "; MARK;
+  cout << "Tree" << m.treeID;
+  cout << " Upper: " << m.latest.upper << " Lower: "; MARK;
   cout << m.latest.lower << " Heater: " <<m.latest.heater; MARK;
   cout << " Time: " << t.text() << endl; MARK;
   // Save calculated sapflow
-  ofstream logfile = ofstream("demo_log.csv", 
+  String fname = "tree" + int2str(m.treeID) + "_log.csv";
+  MARK;
+  ofstream logfile = ofstream(fname.c_str(), 
       ios::out | ios::app ); MARK;
   logfile << t.text() << ", "; MARK;
   logfile << setw(6) << m.latest.upper << ", "; MARK;
@@ -80,7 +80,7 @@ int baseline(struct pt *pt, struct measure_stack &m)
   }; MARK;
   m.reference.upper /= m.i;
   m.reference.lower /= m.i; MARK;
-  cout<<"Baseline: "<<m.reference.upper<<", "<<m.reference.lower<<endl; MARK;
+  cout<<"Tree"<<m.treeID<<" Baseline: "<<m.reference.upper<<", "<<m.reference.lower<<endl; MARK;
   PT_END(pt);
 }
 
@@ -101,23 +101,27 @@ int delta(struct pt *pt, struct measure_stack &m)
 
     In order to get a smoother result, we are takng the average of this calculation over a period of 40 seconds. Burges et. al. (2001) suggests that this value should converge.
   */
-  for(m.i = 0; m.i < 40; ++(m.i) ){ MARK;
-    PT_SEM_WAIT(pt, &m.sem);
+  for(m.i = 0; m.i < 40; ++(m.i) ){ 
+    PT_SEM_WAIT(pt, &m.sem);MARK;
     // Ratio of upper delta over lower delta
     double udelt = m.latest.upper - m.reference.upper;
     double ldelt = m.latest.lower - m.reference.lower;
-    cout << "Delta: " << udelt <<", " << ldelt << endl; MARK;
+    cout<<"Tree"<<m.treeID<<" Delta: "<<udelt<<", "<<ldelt<<endl;
+    MARK;
     // Take the average before the log, since this ratio should converge
     m.flow += udelt / ldelt;
   }; MARK;
-  cout<<"Finished measurements."<<endl; MARK;
+  cout<<"Tree"<<m.treeID<<" Finished measurements."<<endl; MARK;
   m.flow /= m.i; MARK;
   // Complete the rest of the equation
   m.flow = log(m.flow) * (3600.*2e-6/7e-3); MARK;
   // Print the result
   cout<<"Flow is "<<m.flow<<endl; MARK;
   // Write the sapflow to the file.
-  ofstream sapfile = ofstream("demo.csv", ios::out | ios::app); MARK;
+  String fname = "tree" + int2str(m.treeID) + "_sapflow.csv";
+  MARK;
+  ofstream sapfile = ofstream(fname.c_str(), 
+                              ios::out | ios::app); MARK;
   char * time = rtc_ds.now().text(); MARK;
   cout << time << ", "; MARK;
   cout << m.reference.upper << ", "; MARK;
@@ -149,15 +153,18 @@ int mcp3424_measure(struct pt * pt, uint8_t addr, uint8_t ch, int32_t &result){
     ch = CHAN & (ch<<5);
     cfg |= ch;
     // Start the conversion
+    MARK;
     Wire.beginTransmission(addr);
     Wire.write(cfg);
     Wire.endTransmission();
+    MARK;
 
     // Wait for the result
     // 1/3.75Hz = 267ms
     PT_TIMER_DELAY(pt,260);
     do{
       PT_TIMER_DELAY(pt,5);
+      MARK;
       Wire.requestFrom(addr,4);
       data = Wire.read(); // top two bits
       data <<= 8;
@@ -165,6 +172,7 @@ int mcp3424_measure(struct pt * pt, uint8_t addr, uint8_t ch, int32_t &result){
       data <<= 8;
       data |= Wire.read(); // lower byte
       cfg = Wire.read();
+      MARK;
     }while(cfg & RDY);
 
     // Extend the sign

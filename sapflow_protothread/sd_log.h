@@ -4,6 +4,7 @@
 #include <SdFat.h>
 #include <sdios.h> //for ArduinoOutStream
 #include "pinout.h"
+#include "ftoa.h" // from DSPlite, for string conversion
 
 /** @file */
 
@@ -26,3 +27,11 @@ x will contain the string "test(02).csv"
 @returns the new filename it came up with.
 */
 String newfile( String fname, String suffix=".csv" );
+
+
+/** Converts an integer to a string
+ * 
+ * @param x The integer
+ * @returns a string containing a text representation of x
+ */
+String int2str( int32_t x );
