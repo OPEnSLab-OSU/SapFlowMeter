@@ -3,6 +3,8 @@
 #include "pinout.h"
 #include "sleep.h"
 #include "sd_log.h"
+#include "lora.h"
+#include <Wire.h>
 
 /** @file */
 
@@ -29,7 +31,7 @@ struct measure_stack{
   int32_t raw[3]; ///< Stores raw readout from ADC
   uint8_t addr;   ///< I2C address of this ADC
   struct pt child; ///< Control structure for mcp3424_measure()
-  int treeID; ///< Identification number of this tree
+  int32_t treeID; ///< Identification number of this tree
 };
 
 /** Captures a measurement from the three probes.
