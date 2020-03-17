@@ -62,16 +62,18 @@ int schedule(struct pt * pt){
   PT_BEGIN(pt);
   Serial.print("Awoke at ");
   Serial.println(rtc_ds.now().text());
-  
+  static char rendezvous;
   /* Calculate the baseline temperatures */
   // Initialize baseline threads
   PT_INIT(&baseline1_thd);
   PT_INIT(&baseline2_thd);
   // Wait for threads to complete
-  PT_WAIT_WHILE(pt,
-    PT_SCHEDULE(baseline(&baseline1_thd, m1))
-    || PT_SCHEDULE(baseline(&baseline2_thd, m2))
-  );
+  rendezvous = 2; // We have two copies running
+  while(rendezvous){
+    baseline(&baseline1_thd, m1, rendezvous);
+    baseline(&baseline2_thd, m2, rendezvous);
+    PT_YIELD(pt);
+  }
   
   // Turn on the heater
   digitalWrite(HEATER, HIGH);
@@ -88,11 +90,13 @@ int schedule(struct pt * pt){
   // Initialize the delta threads
   PT_INIT(&delta1_thd);
   PT_INIT(&delta2_thd);
-  // Wiat for threads to complete
-  PT_WAIT_WHILE(pt,
-    PT_SCHEDULE(delta(&delta1_thd, m1))
-    || PT_SCHEDULE(delta(&delta2_thd, m2))
-  );
+  // Wait for threads to complete
+  rendezvous = 2; // we have two copies running
+  while(rendezvous){
+    delta(&delta1_thd, m1, rendezvous);
+    delta(&delta2_thd, m2, rendezvous);
+    PT_YIELD(pt);
+  }
   
   Serial.println("Finished logging");
   sleep_cycle(5);  //<Sleep until the next multiple of 5 minutes

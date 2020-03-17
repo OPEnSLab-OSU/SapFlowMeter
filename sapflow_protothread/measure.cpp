@@ -65,7 +65,7 @@ int measure(struct pt *pt, struct measure_stack &m)
 }
 
 // Calculates baseline temperature
-int baseline(struct pt *pt, struct measure_stack &m)
+int baseline(struct pt *pt, struct measure_stack &m, char &rdv)
 {
   PT_BEGIN(pt);MARK;
   // Initialize the baseline (reference) temperature
@@ -81,11 +81,14 @@ int baseline(struct pt *pt, struct measure_stack &m)
   m.reference.upper /= m.i;
   m.reference.lower /= m.i; MARK;
   cout<<"Tree"<<m.treeID<<" Baseline: "<<m.reference.upper<<", "<<m.reference.lower<<endl; MARK;
+  // Wait until all parties have reached the rendezvous
+  --rdv;
+  PT_WAIT_WHILE(pt, rdv);
   PT_END(pt);
 }
 
 // Calculates temperature delta and sapflow
-int delta(struct pt *pt, struct measure_stack &m)
+int delta(struct pt *pt, struct measure_stack &m, char &rdv)
 {
   PT_BEGIN(pt);MARK;
   // Initialize the flow value
@@ -135,6 +138,9 @@ int delta(struct pt *pt, struct measure_stack &m)
   build_msg(m.flow, m.reference.upper, m.maxtemp, m.treeID); MARK;
   send_msg(); MARK;
   
+  // Wait until all parties have reached the rendezvous
+  --rdv;
+  PT_WAIT_WHILE(pt, rdv);
   PT_END(pt);
 }
 
