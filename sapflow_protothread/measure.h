@@ -50,7 +50,7 @@ This is a protothread that averages 10 samples of data to determine the "initial
 @param pt A pointer to the protothread control structure. Don't forget to initialize the control structure in setup().
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
-int baseline(struct pt *pt, struct measure_stack &m);
+int baseline(struct pt *pt, struct measure_stack &m, char &rdv);
 
 /** Calculates temperature delta and sapflow.
 
@@ -60,7 +60,7 @@ It also calls other functions to get the weight, package the data, log to an SD 
 @param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
-int delta(struct pt *pt, struct measure_stack &m);
+int delta(struct pt *pt, struct measure_stack &m, char &rdv);
 
 /// Converts raw measurement into degrees Celcius
 double rtd_calc(int32_t raw);
