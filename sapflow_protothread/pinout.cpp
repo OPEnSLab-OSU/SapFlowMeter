@@ -1,6 +1,8 @@
 #include "pinout.h"
 #include "sd_log.h"
 
+/// @file
+
 void hardware_init(void){
   pinMode(HEATER, OUTPUT);
   digitalWrite(HEATER, LOW);

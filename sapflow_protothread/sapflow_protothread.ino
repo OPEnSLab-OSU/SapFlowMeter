@@ -40,8 +40,8 @@ void setup() {
 }
 
 /** Controls the schedule of heating and sleeping
- *
-This function is in the main .ino because you will need to modify it when adding additional probes.
+
+It waits on each instance of baseline() and delta(), ensuring they each complete before continuing to the next stage. This function is in the main .ino because you will need to modify it when adding additional probes. 
 
 This is the schedule:
 1. Measure temperature of tree (before heat is applied)
@@ -49,7 +49,7 @@ This is the schedule:
 3. Wait for the peak of the heat to reach the upper and lower probes.
 4. Measure the sap flow
 5. Sleep until next measurement cycle
-@param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
+@param pt A pointer to the protothread control structure.
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
 int schedule(struct pt * pt){

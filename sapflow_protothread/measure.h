@@ -39,6 +39,7 @@ struct measure_stack{
 This is a protothread that reads the temperature from three RTD amplifiers connected to the probes in the tree. It stores the result in the struct paramter "latest" and logs to the SD card.
 
 @param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
+@param m Persistent storage for this thread, like a private stack.
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
 int measure(struct pt *pt, struct measure_stack &m);
@@ -48,6 +49,8 @@ int measure(struct pt *pt, struct measure_stack &m);
 This is a protothread that averages 10 samples of data to determine the "initial" or "baseline" temperature of the tree. It should be used before the heater is turned on.
 
 @param pt A pointer to the protothread control structure. Don't forget to initialize the control structure in setup().
+@param m Persistent storage for this thread, like a private stack.
+@param rdv Rendezvous to ensure all baseline() instances stop at the same point
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
 int baseline(struct pt *pt, struct measure_stack &m, char &rdv);
@@ -57,13 +60,26 @@ int baseline(struct pt *pt, struct measure_stack &m, char &rdv);
 This is a protothread that calculates the sap flow by averaging measurements over 40 seconds.
 It also calls other functions to get the weight, package the data, log to an SD card, and send the information over LoRa.
 
-@param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
+@param pt A pointer to the protothread control structure.
+@param m Persistent storage for this thread, like a private stack.
+@param rdv Rendezvous to ensure all delta() instances stop at the same point
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
 int delta(struct pt *pt, struct measure_stack &m, char &rdv);
 
-/// Converts raw measurement into degrees Celcius
+/** Converts raw measurement into degrees Celcius
+
+@param raw The value measured by the ADC
+@returns temperature in Celcius
+*/
 double rtd_calc(int32_t raw);
 
-/// Measures the value of a single ADC channel
+/** Measures the value of a single ADC channel
+
+@param pt A pointer to the protothread control structure
+@param addr The 7-bit I2C address of the ADC. If you choose, you can enter only the last three bits (0-7).
+@param channel The measurement channel. Valid inputs are 1-4.
+@param result The raw 18-bit signed ADC value. Result is bit-extended to 32 bits.
+@returns the status of the protothread (Waiting, yeilded, exited, or ended)
+*/
 int mcp3424_measure(struct pt * pt, uint8_t addr, uint8_t channel, int32_t &result);
