@@ -133,10 +133,7 @@ int delta(struct pt *pt, struct measure_stack &m, char &rdv)
   sapfile << time << ", "<< m.reference.upper << ", "; MARK;
   sapfile << m.reference.lower << ", "<< m.flow << ", "<< endl; MARK;
   sapfile.close(); MARK;
-  // Send the data over LoRa
-  lora_init(); MARK;
-  build_msg(m.flow, m.reference.upper, m.maxtemp, m.treeID); MARK;
-  send_msg(); MARK;
+  // Lora not set up
   
   // Wait until all parties have reached the rendezvous
   --rdv;
@@ -146,7 +143,7 @@ int delta(struct pt *pt, struct measure_stack &m, char &rdv)
 
 double rtd_calc(int32_t raw){
   double volts = -raw * (2.048 / (1UL<<20)); // Vref is 2.048, 17 bits, PGA is 8
-  double ratio = volts * (7.04 / 5.0); // 5V supply, voltage divider using 604-ohm resistor (and 100-ohm RTD)
+  double ratio = volts * (7.04 / 3.3); // 3.3V supply, voltage divider using 604-ohm resistor (and 100-ohm RTD)
   double celcius = ratio * (1/3850e-6); // 3850ppm/K is standard for platinum RTD
   return(celcius);
 }
