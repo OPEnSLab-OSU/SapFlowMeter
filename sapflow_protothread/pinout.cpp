@@ -1,11 +1,13 @@
 #include "pinout.h"
 #include "sd_log.h"
+#include "sleep.h"
 
 /// @file
 
 void hardware_init(void){
   pinMode(HEATER, OUTPUT);
   digitalWrite(HEATER, LOW);
+  USBDevice.attach();
   Serial.begin(115200);
   Serial.println("Serial connected");
   FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_2S);
@@ -21,7 +23,17 @@ void hardware_init(void){
   pinMode(SPI_SCK, OUTPUT);
   pinMode(SPI_MOSI, OUTPUT);
   pinMode(SD_CS, OUTPUT);
+  MARK;
   sd.begin(SD_CS, SD_SCK_MHZ(1));
+  MARK;
+  rtc_ds.begin();
+  // If this is a new RTC, set the time
+  if (rtc_ds.lostPower()) {
+    Serial.println("RTC lost power, lets set the time!");
+    // Set the RTC to the date & time this sketch was compiled
+    rtc_ds.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+  MARK;
 }
 
 void hardware_deinit(void){
