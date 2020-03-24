@@ -1,9 +1,7 @@
 *.pyc
-*.csv
 *.s#*
 *.b#*
 *.pdf
-*.csv
 *.png
 
 __pycache__
