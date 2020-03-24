@@ -1,0 +1,6 @@
+This folder contains data from our sapflow probes.
+In general, files that say "log" are temperature data, and files that say "sapflow" have calculated data.
+
+tree3 is a rhodedendron, with data captured using the MAX38165 RTD amplifier
+
+tree4 is the same rhodedendron, using the MCP3432 ADC and a wheatstone bridge to get temeprature.
