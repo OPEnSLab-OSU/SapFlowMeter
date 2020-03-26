@@ -31,7 +31,11 @@ void hardware_init(void){
   if (rtc_ds.lostPower()) {
     Serial.println("RTC lost power, lets set the time!");
     // Set the RTC to the date & time this sketch was compiled
-    rtc_ds.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    rtc_ds.adjust(compile_time);
+  } else if( (rtc_ds.now()-compile_time).totalseconds() < 0){
+    cout<<"RTC is in the past. Updating from "<<rtc_ds.now().text()
+    <<" to "<<compile_time.text()<<endl;
+    rtc_ds.adjust(compile_time);
   }
   MARK;
 }

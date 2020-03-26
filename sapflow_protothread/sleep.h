@@ -5,7 +5,12 @@
 #include "pinout.h"
 
 static RTC_DS3231 rtc_ds; ///< Instance of our real-time clock
-
+/** Compile time of our sketch
+ *
+ * Approximately the same as when the sketch was uploaded, but could
+ * be off by tens of seconds
+ */
+static DateTime compile_time = DateTime(F(__DATE__), F(__TIME__));
 /** @file */
 
 /** Interrupt handler for RTC alarm
@@ -33,10 +38,10 @@ void feather_sleep( void );
 /** Sleep function for periodic sleeping.
 
 Sleep until the time is a round multiple of the minute inteval.
-Produces unexpected bevahior for non-factors of 60 (7, 8, 9, 11, etc).
 For example, if it's 5:39 and you select an interval of 15, the microcontroller will wake up at 5:45, since 3*15 = 45.
 This function internally calls feather_sleep() to handle prep and resume from sleeping
 
-@param interval The increment to sleep for.
+@param interval The increment to sleep for (in minutes)
+@param offset Additional delay before waking up (in seconds). This is useful for staggering wakeup times to avoid LoRa packet collision
 */
-void sleep_cycle( int interval = 5 );
+void sleep_cycle( int interval = 5, int offset=0 );
