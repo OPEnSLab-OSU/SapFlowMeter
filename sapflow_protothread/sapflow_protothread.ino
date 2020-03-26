@@ -8,9 +8,6 @@
 struct measure_stack m1, m2;
 
 struct pt schedule_thd, ///< Control structure for schedule() thread
-measure1_thd, ///< Control structure for measure() thread
-baseline1_thd, ///< Control structure for baseline() thread
-delta1_thd, ///< Control structure for delta() thread
 measure2_thd, ///< Control structure for measure() thread
 baseline2_thd, ///< Control structure for baseline() thread
 delta2_thd; ///< Control structure for delta() thread
@@ -23,8 +20,6 @@ It initializes some hardware, puts the protothreads in a known state, and begins
 */
 void setup() {
   // Configure the external ADCs
-  m1.addr = 6;
-  m1.treeID = 3;
   m2.addr = 5;
   m2.treeID = 4;
   // Initialize the hardware
@@ -40,14 +35,13 @@ void setup() {
     rtc_ds.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
   //Initialize the thread control structures
-  PT_INIT(&measure1_thd);
   PT_INIT(&measure2_thd);
   PT_INIT(&schedule_thd);
 }
 
 /** Controls the schedule of heating and sleeping
- *
-This function is in the main .ino because you will need to modify it when adding additional probes.
+
+It waits on each instance of baseline() and delta(), ensuring they each complete before continuing to the next stage. This function is in the main .ino because you will need to modify it when adding additional probes. 
 
 This is the schedule:
 1. Measure temperature of tree (before heat is applied)
@@ -55,7 +49,7 @@ This is the schedule:
 3. Wait for the peak of the heat to reach the upper and lower probes.
 4. Measure the sap flow
 5. Sleep until next measurement cycle
-@param pt A pointer to the protothread control structure. The default parameter is correct. Don't forget to initialize the control structure in setup().
+@param pt A pointer to the protothread control structure.
 @returns the status of the protothread (Waiting, yeilded, exited, or ended)
 */
 int schedule(struct pt * pt){
@@ -65,12 +59,10 @@ int schedule(struct pt * pt){
   static char rendezvous;
   /* Calculate the baseline temperatures */
   // Initialize baseline threads
-  PT_INIT(&baseline1_thd);
   PT_INIT(&baseline2_thd);
   // Wait for threads to complete
-  rendezvous = 2; // We have two copies running
+  rendezvous = 1; // We have two copies running
   while(rendezvous){
-    baseline(&baseline1_thd, m1, rendezvous);
     baseline(&baseline2_thd, m2, rendezvous);
     PT_YIELD(pt);
   }
@@ -88,12 +80,10 @@ int schedule(struct pt * pt){
   
   /* Calculate the sapflow, send over LoRa */
   // Initialize the delta threads
-  PT_INIT(&delta1_thd);
   PT_INIT(&delta2_thd);
   // Wait for threads to complete
-  rendezvous = 2; // we have two copies running
+  rendezvous = 1; // we have two copies running
   while(rendezvous){
-    delta(&delta1_thd, m1, rendezvous);
     delta(&delta2_thd, m2, rendezvous);
     PT_YIELD(pt);
   }
@@ -110,7 +100,6 @@ This function is called inside a hidden loop in the Arduino framework.
 We're using it for protothread scheduling. All the real work happens inside the protothreads.
 */
 void loop() {
-  measure(&measure1_thd, m1);  //< Actually performs measurement.
   measure(&measure2_thd, m2);  //< Actually performs measurement.
   schedule(&schedule_thd); //< Dictates the timing of calculations
 

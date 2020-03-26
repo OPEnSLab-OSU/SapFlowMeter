@@ -3,9 +3,6 @@
 /// @file 
 
 void alarmISR() {
-  // Reset the alarm.
-  rtc_ds.armAlarm(1, false);
-
   // Disable this interrupt
   detachInterrupt(digitalPinToInterrupt(ALARM_PIN));
 }
@@ -25,7 +22,6 @@ void feather_sleep( void ){MARK;
   // Sleep
   LowPower.standby();
   // Resume
-  USBDevice.attach();
   hardware_init();
 }
 
