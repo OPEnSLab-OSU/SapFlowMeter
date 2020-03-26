@@ -1,4 +1,5 @@
 #include "sleep.h"
+#include "sd_log.h"
 
 /// @file 
 
@@ -26,17 +27,20 @@ void feather_sleep( void ){MARK;
 }
 
 // Sleep until the time is a round multiple of the minute inteval.
-// Produces unexpected bevahior for non-factors of 60 (7, 8, 9, 11, etc)
-void sleep_cycle( int interval ){MARK;
-  Serial.print("Sleeping until nearest multiple of ");
-  Serial.print(interval);
-  Serial.println(" minutes");MARK;
+void sleep_cycle( int interval, int offset ){
+  MARK;
+  cout<<"Sleeping until nearest multiple of "<<interval
+  <<" minutes with "<<offset<<" seconds offset"<<endl;
+  MARK;
   DateTime t = rtc_ds.now();MARK;
-  t = t + TimeSpan( interval * 60 );MARK;
-  uint8_t minutes = interval*(t.minute()/interval);MARK;
-  rtc_ds.setAlarm(ALM2_MATCH_MINUTES, minutes, 0, 0);MARK;
-  Serial.print("Alarm set to ");MARK;
-  t = rtc_ds.getAlarm(2);MARK;
-  Serial.println(t.text());MARK;
+  interval *= 60;
+  // Roll back to start of this interval using integer floor
+  t = DateTime((t.unixtime()/interval)*interval);
+  cout<<"Rolled back to "<<t.text()<<endl;
+  // Add interval and offset
+  t = t + TimeSpan( interval + offset);MARK;
+  rtc_ds.setAlarm(t);MARK;
+  cout<<"Alarm set to "<<rtc_ds.getAlarm(1).text()<<endl;
+  MARK;
   feather_sleep();MARK;
 }

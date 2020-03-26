@@ -1,6 +1,6 @@
 board=adafruit:samd:adafruit_feather_m0
 sketch=sapflow_protothread
-#sketch=Feather9x_RX
+#sketch=mcp3424_code
 bossac=/home/marshal/.arduino15/packages/arduino/tools/bossac/1.8.0*/bossac
 port=/dev/ttyACM0
 read_fault=$(HOME)/Arduino/libraries/FeatherFault/tools/recover_fault/recover_fault.py
