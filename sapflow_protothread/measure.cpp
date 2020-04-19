@@ -25,12 +25,11 @@ int measure(struct pt *pt, struct measure_stack &m)
   /* read from ch1 - heater */
   PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,1,m.raw[0]));
 
-  /* read from ch2 - bottom */
-  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,2,m.raw[1]));
+  /* read from ch2 - top */
+  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,4,m.raw[1]));
 
-  /* read from ch4 - top    */
-  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,4,m.raw[2]));
-  m.raw[2] = -m.raw[2]; // input wires on ch4 are backwards
+  /* read from ch4 - bottom    */
+  PT_SPAWN(pt, &m.child, mcp3424_measure(&m.child,m.addr,2,m.raw[2]));
   MARK;
   /* turn raw readings into temperatures */
   m.latest.heater = rtd_calc(m.raw[0]);
