@@ -8,6 +8,9 @@
 struct measure_stack m1, m2;
 
 struct pt schedule_thd, ///< Control structure for schedule() thread
+measure1_thd, ///< Control structure for measure() thread
+baseline1_thd, ///< Control structure for baseline() thread
+delta1_thd, ///< Control structure for delta() thread
 measure2_thd, ///< Control structure for measure() thread
 baseline2_thd, ///< Control structure for baseline() thread
 delta2_thd; ///< Control structure for delta() thread
@@ -20,13 +23,16 @@ It initializes some hardware, puts the protothreads in a known state, and begins
 */
 void setup() {
   // Configure the external ADCs
-  m2.addr = 5;
-  m2.treeID = 4;
+  m1.addr = 5;
+  m1.treeID = 1;
+  m2.addr = 6;
+  m2.treeID = 2;
   // Initialize the hardware
   hardware_init();
   // Initialize the logger
   syslog_init();
   //Initialize the thread control structures
+  PT_INIT(&measure1_thd);
   PT_INIT(&measure2_thd);
   PT_INIT(&schedule_thd);
 }
@@ -49,10 +55,12 @@ int schedule(struct pt * pt){
   static char rendezvous;
   /* Calculate the baseline temperatures */
   // Initialize baseline threads
+  PT_INIT(&baseline1_thd);
   PT_INIT(&baseline2_thd);
   // Wait for threads to complete
-  rendezvous = 1; // We have two copies running
+  rendezvous = 2; // We have two copies running
   while(rendezvous){
+    baseline(&baseline1_thd, m1, rendezvous);
     baseline(&baseline2_thd, m2, rendezvous);
     PT_YIELD(pt);
   }
@@ -66,10 +74,12 @@ int schedule(struct pt * pt){
   
   /* Calculate the sapflow, send over LoRa */
   // Initialize the delta threads
+  PT_INIT(&delta1_thd);
   PT_INIT(&delta2_thd);
   // Wait for threads to complete
-  rendezvous = 1; // we have two copies running
+  rendezvous = 2; // we have two copies running
   while(rendezvous){
+    delta(&delta1_thd, m1, rendezvous);
     delta(&delta2_thd, m2, rendezvous);
     PT_YIELD(pt);
   }
@@ -86,6 +96,7 @@ This function is called inside a hidden loop in the Arduino framework.
 We're using it for protothread scheduling. All the real work happens inside the protothreads.
 */
 void loop() {
+  measure(&measure1_thd, m1);  //< Actually performs measurement.
   measure(&measure2_thd, m2);  //< Actually performs measurement.
   schedule(&schedule_thd); //< Dictates the timing of calculations
 
