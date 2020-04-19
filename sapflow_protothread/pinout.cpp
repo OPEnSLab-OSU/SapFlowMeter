@@ -27,17 +27,9 @@ void hardware_init(void){
   sd.begin(SD_CS, SD_SCK_MHZ(1));
   MARK;
   rtc_ds.begin();
-  // If this is a new RTC, set the time
-  if (rtc_ds.lostPower()) {
-    Serial.println("RTC lost power, lets set the time!");
-    // Set the RTC to the date & time this sketch was compiled
-    rtc_ds.adjust(compile_time);
-  } else if( (rtc_ds.now()-compile_time).totalseconds() < 0){
-    cout<<"RTC is in the past. Updating from "<<rtc_ds.now().text()
-    <<" to "<<compile_time.text()<<endl;
-    rtc_ds.adjust(compile_time);
-  }
   MARK;
+  // Pacific Daylight Time is UTC-7
+  plog::TimeSync(rtc_ds.now(), -7);
 }
 
 void hardware_deinit(void){

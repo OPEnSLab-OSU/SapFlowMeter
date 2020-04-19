@@ -24,16 +24,8 @@ void setup() {
   m2.treeID = 4;
   // Initialize the hardware
   hardware_init();
-  // Check that we have an RTC
-  if (! rtc_ds.begin()) {
-    Serial.println("Couldn't find RTC");
-  }
-  // If this is a new RTC, set the time
-  if (rtc_ds.lostPower()) {
-    Serial.println("RTC lost power, lets set the time!");
-    // Set the RTC to the date & time this sketch was compiled
-    rtc_ds.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
+  // Initialize the logger
+  syslog_init();
   //Initialize the thread control structures
   PT_INIT(&measure2_thd);
   PT_INIT(&schedule_thd);
@@ -54,8 +46,6 @@ This is the schedule:
 */
 int schedule(struct pt * pt){
   PT_BEGIN(pt);
-  Serial.print("Awoke at ");
-  Serial.println(rtc_ds.now().text());
   static char rendezvous;
   /* Calculate the baseline temperatures */
   // Initialize baseline threads
@@ -69,14 +59,10 @@ int schedule(struct pt * pt){
   
   // Turn on the heater
   digitalWrite(HEATER, HIGH);
-  Serial.print("Heater On at ");
-  Serial.println(rtc_ds.now().text());
+  PLOG_INFO << "Heater On";
   PT_TIMER_DELAY(pt,3000); //< Heater is on for 3 seconds
   digitalWrite(HEATER, LOW); //< Turn off the heater
-  Serial.print("Heater Off at ");
-  Serial.println(rtc_ds.now().text());
-  PT_TIMER_DELAY(pt,100*1000);  //< Wait for heat to propagate
-  Serial.println("Temperature probably reached plateau");
+  PLOG_INFO << "Heater Off";
   
   /* Calculate the sapflow, send over LoRa */
   // Initialize the delta threads
@@ -88,7 +74,7 @@ int schedule(struct pt * pt){
     PT_YIELD(pt);
   }
   
-  Serial.println("Finished logging");
+  PLOG_VERBOSE << "Finished logging";
   sleep_cycle(5);  //<Sleep until the next multiple of 5 minutes
   PT_RESTART(pt); //< Loop back to the beginning
   PT_END(pt);
