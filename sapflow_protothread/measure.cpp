@@ -34,8 +34,11 @@ int measure(struct pt *pt, struct measure_stack &m)
   MARK;
   /* turn raw readings into temperatures */
   m.latest.heater = rtd_calc(m.raw[0]);
+  inrange(m.treeID, "heater temperature", m.latest.heater, 0, 50);
   m.latest.lower = rtd_calc(m.raw[1]);
+  inrange(m.treeID, "lower probe temperature", m.latest.lower, 0, 30);
   m.latest.upper = rtd_calc(m.raw[2]);
+  inrange(m.treeID, "upper probe temperature", m.latest.upper, 0, 30);
   // Set the binary semaphore
   m.sem.count = 1;
   
@@ -50,10 +53,11 @@ int measure(struct pt *pt, struct measure_stack &m)
   cout << m.latest.lower << " Heater: " <<m.latest.heater; MARK;
   cout << " Time: " << t.text() << endl; MARK;
   // Save calculated sapflow
-  String fname = "tree" + int2str(m.treeID) + "_log.csv";
+  char buf[32];
+  obufstream fname(buf, 32);
+  fname << "tree" << m.treeID << "_log.csv";
   MARK;
-  ofstream logfile = ofstream(fname.c_str(), 
-      ios::out | ios::app ); MARK;
+  ofstream logfile = ofstream(buf, ios::out | ios::app); MARK;
   logfile << t.text() << ", "; MARK;
   logfile << setw(6) << m.latest.upper << ", "; MARK;
   logfile << setw(6) << m.latest.lower << ", "; MARK;
@@ -71,16 +75,19 @@ int baseline(struct pt *pt, struct measure_stack &m, char &rdv)
   // Initialize the baseline (reference) temperature
   m.reference.upper = 0;
   m.reference.lower = 0;
-  m.maxtemp = -300; //< Any temperature should be greater than this.
+  m.reference.heater = 0;
   // Take an average over the first 10 seconds
   for(m.i = 0; m.i < 10; ++(m.i)){ MARK;
     PT_SEM_WAIT(pt, &m.sem);
     m.reference.upper += m.latest.upper;
     m.reference.lower += m.latest.lower;
+    m.reference.heater += m.latest.heater;
   }; MARK;
   m.reference.upper /= m.i;
-  m.reference.lower /= m.i; MARK;
-  cout<<"Tree"<<m.treeID<<" Baseline: "<<m.reference.upper<<", "<<m.reference.lower<<endl; MARK;
+  m.reference.lower /= m.i;
+  m.reference.heater /= m.i; MARK;
+  PLOG_DEBUG<<"Tree"<<m.treeID<<" Baseline: "<<m.reference.upper
+  <<", "<<m.reference.lower<<","<<m.reference.heater; MARK;
   // Wait until all parties have reached the rendezvous
   --rdv;
   PT_WAIT_WHILE(pt, rdv);
@@ -91,6 +98,10 @@ int baseline(struct pt *pt, struct measure_stack &m, char &rdv)
 int delta(struct pt *pt, struct measure_stack &m, char &rdv)
 {
   PT_BEGIN(pt);MARK;
+  inrange(m.treeID, "Heater Peak Temperature", m.latest.heater,
+          m.reference.heater+5, m.reference.heater+20);
+  PT_TIMER_DELAY(pt,100*1000);  //< Wait for heat to propagate
+  PLOG_VERBOSE << "Tree"<<m.treeID<<"Delta Thread Starting";
   // Initialize the flow value
   m.flow = 0;
   /** We compute sapflow using the following formula::
@@ -109,22 +120,23 @@ int delta(struct pt *pt, struct measure_stack &m, char &rdv)
     // Ratio of upper delta over lower delta
     double udelt = m.latest.upper - m.reference.upper;
     double ldelt = m.latest.lower - m.reference.lower;
-    cout<<"Tree"<<m.treeID<<" Delta: "<<udelt<<", "<<ldelt<<endl;
+    PLOG_DEBUG<<"Tree"<<m.treeID<<" Delta: "<<udelt<<", "<<ldelt;
     MARK;
     // Take the average before the log, since this ratio should converge
     m.flow += udelt / ldelt;
   }; MARK;
-  cout<<"Tree"<<m.treeID<<" Finished measurements."<<endl; MARK;
+  PLOG_VERBOSE<<"Tree"<<m.treeID<<" Finished measurements."; MARK;
   m.flow /= m.i; MARK;
   // Complete the rest of the equation
   m.flow = log(m.flow) * (3600.*2e-6/7e-3); MARK;
   // Print the result
   cout<<"Flow is "<<m.flow<<endl; MARK;
   // Write the sapflow to the file.
-  String fname = "tree" + int2str(m.treeID) + "_sapflow.csv";
+  char buf[32];
+  obufstream fname(buf, 32);
+  fname << "tree" << m.treeID << "_sapflow.csv";
   MARK;
-  ofstream sapfile = ofstream(fname.c_str(), 
-                              ios::out | ios::app); MARK;
+  ofstream sapfile = ofstream(buf, ios::out | ios::app); MARK;
   char * time = rtc_ds.now().text(); MARK;
   cout << time << ", "; MARK;
   cout << m.reference.upper << ", "; MARK;
