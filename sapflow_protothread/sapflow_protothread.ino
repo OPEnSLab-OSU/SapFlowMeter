@@ -1,6 +1,7 @@
 #include "pinout.h"
 #include "sleep.h"
 #include "measure.h"
+#include "sd_log.h"
 
 /** @file */
 
@@ -85,7 +86,7 @@ int schedule(struct pt * pt){
   }
   
   PLOG_VERBOSE << "Finished logging";
-  sleep_cycle(5);  //<Sleep until the next multiple of 5 minutes
+  sleep_cycle(5, 0);  //<Sleep until the next multiple of 5 minutes
   PT_RESTART(pt); //< Loop back to the beginning
   PT_END(pt);
 }

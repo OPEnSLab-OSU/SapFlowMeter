@@ -8,7 +8,7 @@ read_fault=$(HOME)/Arduino/libraries/FeatherFault/tools/recover_fault/recover_fa
 all: build flash
 
 build:
-	arduino-cli compile -b $(board) $(sketch)
+	arduino-cli compile -b $(board) $(sketch) --build-properties compiler.cpp.extra_flags=-Og 
 
 flash:
 	#FIXME: Open port and set baud rate to 1200 to start Arduino bootloader
@@ -32,5 +32,6 @@ docs:
 	doxygen $(sketch)/Doxyfile
 
 clean:
+	arduino-cli cache clean
 	rm $(sketch)/*.bin
 	rm $(sketch)/*.elf

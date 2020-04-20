@@ -34,7 +34,7 @@ The string is stored in a global variable to be read by send_msg()
 @param time The date and time from the Real-Time Clock
 @param treeID the tree identification number
 */
-void build_msg(float flow, float temp, float maxtemp, int treeID=0);
+void build_msg(float flow, float temperature, int treeID);
 
 /**
 Sends a LoRa packet to the base station.

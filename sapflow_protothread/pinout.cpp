@@ -30,6 +30,7 @@ void hardware_init(void){
   MARK;
   // Pacific Daylight Time is UTC-7
   plog::TimeSync(rtc_ds.now(), -7);
+  PLOGD << "Time set";
 }
 
 void hardware_deinit(void){

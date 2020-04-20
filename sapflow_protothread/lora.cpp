@@ -1,4 +1,5 @@
 #include "lora.h"
+#include "sd_log.h"
 
 /// @file
 
@@ -28,18 +29,18 @@ void lora_init(void)
   delay(10);
 
   while (!manager.init()) {
-    Serial.println("LoRa radio init failed");
-    Serial.println("Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info");
+    PLOG_ERROR << "LoRa radio init failed";
+    PLOG_DEBUG << "Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info";
     while (1);
   }
-  Serial.println("LoRa radio init OK!");
+  PLOG_INFO << "LoRa radio init OK!";
 
   // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
   if (!rf95.setFrequency(RF95_FREQ)) {
-    Serial.println("setFrequency failed");
+    PLOG_ERROR << "setFrequency failed";
     while (1);
   }
-  Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
+  PLOG_INFO << "Set Freq to: "<< RF95_FREQ;
   
   /** Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
@@ -55,9 +56,9 @@ static int16_t packetnum = 0;  //< packet counter, we increment per xmission
 static char radiopacket[RH_RF95_MAX_MESSAGE_LEN];
 static uint8_t packet_len; //< Max message length is 251, so we won't overflow
 
-void build_msg(float flow, float temp, float maxtemp, int treeID )
+void build_msg(float flow, float temp, int treeID )
 {
-  Serial.print("Building message...");
+  PLOG_DEBUG << "Building message...";
   const int capacity=JSON_OBJECT_SIZE(10);
   StaticJsonDocument<capacity>doc;
   char str1[15];
@@ -67,22 +68,20 @@ void build_msg(float flow, float temp, float maxtemp, int treeID )
   tstring += 11; //< skip the date, just use the time
   ftoa(flow, str1);
   ftoa(temp, str3);
-  ftoa(maxtemp, str2);
   doc["flow"].set(str1);
   doc["temp"].set(str3);
-  doc["maxtemp"].set(str2);
   doc["id"].set(treeID);
   doc["time"].set(tstring);
   packet_len = serializeJson(doc,radiopacket);
-  Serial.println(radiopacket);
-  radiopacket[packet_len] = 0;
+  radiopacket[packet_len] = 0; // null-terminate
+  PLOG_DEBUG << radiopacket;
 }
 
 
 void send_msg( void )
 {
   digitalWrite(RFM95_CS, LOW); //< enable LoRa
-  Serial.println("Transmitting..."); //< Send a message to rf95_server
+  PLOG_DEBUG << "Transmitting..."; //< Send a message to rf95_server
   // Send a message to manager_server
   if (manager.sendtoWait((uint8_t *)radiopacket, packet_len, SERVER_ADDRESS))
   {
@@ -90,20 +89,16 @@ void send_msg( void )
     uint8_t from;   
     if (manager.recvfromAckTimeout((uint8_t *)radiopacket, &packet_len, 2000, &from))
     {
-      Serial.print("got reply from : 0x");
-      Serial.print(from, HEX);
-      Serial.print(": ");
-      Serial.println(radiopacket);
-      Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);
+      PLOG_DEBUG.printf("got reply from %H, RSSI: %d", from, rf95.lastRssi());
+      PLOG_INFO << radiopacket;
     }
     else
     {
-      Serial.println("No reply, is server running?");
+      PLOG_WARNING << "No reply, is server running?";
     }
   }
   else
-    Serial.println("sendtoWait failed");
+    PLOG_WARNING << "sendtoWait failed";
 
   digitalWrite(RFM95_CS, HIGH); //< disable LoRa
 }
