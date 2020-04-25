@@ -14,6 +14,9 @@ enum register_mask{
 int measure(struct pt *pt, struct measure_stack &m)
 {
   PT_BEGIN(pt);
+  if( 0 == m.treeID )
+    PT_RESTART(pt);
+
   // Validate the I2C address
   m.addr = (0b1101<<3) | (m.addr & 0b111);
   // Wait for 1 second to elapse
@@ -71,22 +74,24 @@ int measure(struct pt *pt, struct measure_stack &m)
 int baseline(struct pt *pt, struct measure_stack &m, char &rdv)
 {
   PT_BEGIN(pt);MARK;
-  // Initialize the baseline (reference) temperature
-  m.reference.upper = 0;
-  m.reference.lower = 0;
-  m.reference.heater = 0;
-  // Take an average over the first 10 seconds
-  for(m.i = 0; m.i < 10; ++(m.i)){ MARK;
-    PT_SEM_WAIT(pt, &m.sem);
-    m.reference.upper += m.latest.upper;
-    m.reference.lower += m.latest.lower;
-    m.reference.heater += m.latest.heater;
-  }; MARK;
-  m.reference.upper /= m.i;
-  m.reference.lower /= m.i;
-  m.reference.heater /= m.i; MARK;
-  PLOG_DEBUG<<"Tree"<<m.treeID<<" Baseline: "<<m.reference.upper
-  <<", "<<m.reference.lower<<","<<m.reference.heater; MARK;
+  if( m.treeID ){
+    // Initialize the baseline (reference) temperature
+    m.reference.upper = 0;
+    m.reference.lower = 0;
+    m.reference.heater = 0;
+    // Take an average over the first 10 seconds
+    for(m.i = 0; m.i < 10; ++(m.i)){ MARK;
+      PT_SEM_WAIT(pt, &m.sem);
+      m.reference.upper += m.latest.upper;
+      m.reference.lower += m.latest.lower;
+      m.reference.heater += m.latest.heater;
+    }; MARK;
+    m.reference.upper /= m.i;
+    m.reference.lower /= m.i;
+    m.reference.heater /= m.i; MARK;
+    PLOG_DEBUG<<"Tree"<<m.treeID<<" Baseline: "<<m.reference.upper
+    <<", "<<m.reference.lower<<","<<m.reference.heater; MARK;
+  }
   // Wait until all parties have reached the rendezvous
   --rdv;
   PT_WAIT_WHILE(pt, rdv);
@@ -97,60 +102,62 @@ int baseline(struct pt *pt, struct measure_stack &m, char &rdv)
 int delta(struct pt *pt, struct measure_stack &m, char &rdv)
 {
   PT_BEGIN(pt);MARK;
-  inrange(m.treeID, "Heater Peak Temperature", m.latest.heater,
-          m.reference.heater+5, m.reference.heater+20);
-  PT_TIMER_DELAY(pt,100*1000);  //< Wait for heat to propagate
-  PLOG_VERBOSE << "Tree"<<m.treeID<<"Delta Thread Starting";
-  // Initialize the flow value
-  m.flow = 0;
-  /** We compute sapflow using the following formula::
-    sapflow = k / x * log(v1 / v2) / 3600
-
-    - k is an empirical constant
-    - x is the distance between the probes
-    - v1 is temperature increase of the upper probe from its baseline temperature
-    - v2 is the temperature increase of the lower probe from its baseline temperature
-    - 3600 is the number of seconds in an hour
-
-    In order to get a smoother result, we are takng the average of this calculation over a period of 40 seconds. Burges et. al. (2001) suggests that this value should converge.
-  */
-  for(m.i = 0; m.i < 40; ++(m.i) ){ 
-    PT_SEM_WAIT(pt, &m.sem);MARK;
-    // Ratio of upper delta over lower delta
-    double udelt = m.latest.upper - m.reference.upper;
-    double ldelt = m.latest.lower - m.reference.lower;
-    PLOG_DEBUG<<"Tree"<<m.treeID<<" Delta: "<<udelt<<", "<<ldelt;
+  if(m.treeID){
+    inrange(m.treeID, "Heater Peak Temperature", m.latest.heater,
+            m.reference.heater+5, m.reference.heater+20);
+    PT_TIMER_DELAY(pt,100*1000);  //< Wait for heat to propagate
+    PLOG_VERBOSE << "Tree"<<m.treeID<<"Delta Thread Starting";
+    // Initialize the flow value
+    m.flow = 0;
+    /** We compute sapflow using the following formula::
+      sapflow = k / x * log(v1 / v2) / 3600
+  
+      - k is an empirical constant
+      - x is the distance between the probes
+      - v1 is temperature increase of the upper probe from its baseline temperature
+      - v2 is the temperature increase of the lower probe from its baseline temperature
+      - 3600 is the number of seconds in an hour
+  
+      In order to get a smoother result, we are takng the average of this calculation over a period of 40 seconds. Burges et. al. (2001) suggests that this value should converge.
+    */
+    for(m.i = 0; m.i < 40; ++(m.i) ){ 
+      PT_SEM_WAIT(pt, &m.sem);MARK;
+      // Ratio of upper delta over lower delta
+      double udelt = m.latest.upper - m.reference.upper;
+      double ldelt = m.latest.lower - m.reference.lower;
+      PLOG_DEBUG<<"Tree"<<m.treeID<<" Delta: "<<udelt<<", "<<ldelt;
+      MARK;
+      // Take the average before the log, since this ratio should converge
+      m.flow += udelt / ldelt;
+    }; MARK;
+    PLOG_VERBOSE<<"Tree"<<m.treeID<<" Finished measurements."; MARK;
+    m.flow /= m.i; MARK;
+    // Complete the rest of the equation
+    m.flow = log(m.flow) * (3600.*2e-6/7e-3); MARK;
+    // Print the result
+    cout<<"Flow is "<<m.flow<<endl; MARK;
+    // Write the sapflow to the file.
+    char buf[32];
+    obufstream fname(buf, 32);
+    fname << "tree" << m.treeID << "_sapflow.csv";
     MARK;
-    // Take the average before the log, since this ratio should converge
-    m.flow += udelt / ldelt;
-  }; MARK;
-  PLOG_VERBOSE<<"Tree"<<m.treeID<<" Finished measurements."; MARK;
-  m.flow /= m.i; MARK;
-  // Complete the rest of the equation
-  m.flow = log(m.flow) * (3600.*2e-6/7e-3); MARK;
-  // Print the result
-  cout<<"Flow is "<<m.flow<<endl; MARK;
-  // Write the sapflow to the file.
-  char buf[32];
-  obufstream fname(buf, 32);
-  fname << "tree" << m.treeID << "_sapflow.csv";
-  MARK;
-  ofstream sapfile = ofstream(buf, ios::out | ios::app); MARK;
-  char * time = rtc_ds.now().text(); MARK;
-  cout << time << ", "; MARK;
-  cout << m.reference.upper << ", "; MARK;
-  cout << m.reference.lower << ", "; MARK;
-  cout << m.flow << ", " << endl; MARK;
-  sapfile << time << ", "<< m.reference.upper << ", "; MARK;
-  sapfile << m.reference.lower << ", "<< m.flow << ", "<< endl; MARK;
-  sapfile.close(); MARK;
-  // Send message over LoRa
-  lora_init();
-  MARK;
-  build_msg(m.flow, m.reference.upper, m.treeID);
-  MARK;
-  send_msg();
-  MARK;
+    ofstream sapfile = ofstream(buf, ios::out | ios::app); MARK;
+    char * time = rtc_ds.now().text(); MARK;
+    cout << time << ", "; MARK;
+    cout << m.reference.upper << ", "; MARK;
+    cout << m.reference.lower << ", "; MARK;
+    cout << m.flow << ", " << endl; MARK;
+    sapfile << time << ", "<< m.reference.upper << ", "; MARK;
+    sapfile << m.reference.lower << ", "<< m.flow << ", "<< endl; MARK;
+    sapfile.close(); MARK;
+    // Send message over LoRa
+    lora_init();
+    MARK;
+    build_msg(m.flow, m.reference.upper, m.treeID);
+    MARK;
+    send_msg();
+    MARK;
+  } 
   // Wait until all parties have reached the rendezvous
   --rdv;
   PT_WAIT_WHILE(pt, rdv);

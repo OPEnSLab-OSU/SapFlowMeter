@@ -12,9 +12,6 @@
 //< Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
-// Class to manage message delivery and receipt, using the driver declared above
-static RHReliableDatagram manager(rf95, CLIENT_ADDRESS);
-
 void lora_init(void) 
 {
   digitalWrite(RFM95_CS, LOW); //< enable LoRa
@@ -28,7 +25,7 @@ void lora_init(void)
   digitalWrite(RFM95_RST, HIGH);
   delay(10);
 
-  while (!manager.init()) {
+  while (!rf95.init()) {
     PLOG_ERROR << "LoRa radio init failed";
     PLOG_DEBUG << "Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info";
     while (1);
@@ -81,24 +78,29 @@ void build_msg(float flow, float temp, int treeID )
 void send_msg( void )
 {
   digitalWrite(RFM95_CS, LOW); //< enable LoRa
-  PLOG_DEBUG << "Transmitting..."; //< Send a message to rf95_server
   // Send a message to manager_server
-  if (manager.sendtoWait((uint8_t *)radiopacket, packet_len, SERVER_ADDRESS))
-  {
+  rf95.send((uint8_t *)radiopacket, packet_len);
+  PLOG_DEBUG << "Transmitting..."; //< Send a message to rf95_server
+  rf95.waitPacketSent();
+  PLOG_DEBUG << "Packet sent.";
     // Now wait for a reply from the server
-    uint8_t from;   
-    if (manager.recvfromAckTimeout((uint8_t *)radiopacket, &packet_len, 2000, &from))
+  if (rf95.waitAvailableTimeout(1000))
+  { 
+    // Should be a reply message for us now   
+    if (rf95.recv((uint8_t*)radiopacket, &packet_len))
     {
-      PLOG_DEBUG.printf("got reply from %H, RSSI: %d", from, rf95.lastRssi());
-      PLOG_INFO << radiopacket;
+      PLOG_INFO << "Got reply: "<< radiopacket;
+      PLOG_INFO << "RSSI: " << rf95.lastRssi();
     }
     else
     {
-      PLOG_WARNING << "No reply, is server running?";
+      PLOG_WARNING << "Receive failed";
     }
   }
   else
-    PLOG_WARNING << "sendtoWait failed";
+  {
+    PLOG_WARNING << "No reply, is there a listener around?";
+  }
 
   digitalWrite(RFM95_CS, HIGH); //< disable LoRa
 }
