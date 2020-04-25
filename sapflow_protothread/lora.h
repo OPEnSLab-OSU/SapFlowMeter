@@ -1,10 +1,7 @@
 #pragma once
 
 #include "pinout.h"
-#include "measure.h" // for rtc_ds.now().text()
-
-#define CLIENT_ADDRESS 1 ///< Our LoRa address
-#define SERVER_ADDRESS 2 ///< The LoRa address of the base station
+#include "sleep.h" // for rtc_ds.now().text()
 
 /** Radio frequency (in MHz). 
 

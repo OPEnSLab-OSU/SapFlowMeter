@@ -5,6 +5,7 @@
 
 /** @file */
 
+const int thd_count = 2;
 /// Persistent variables for measurement
 struct measure_stack m1, m2;
 
@@ -23,10 +24,12 @@ This function is called when the microcontroller first starts up or is reset. It
 It initializes some hardware, puts the protothreads in a known state, and begins the measurement cycle (which starts with sleep)
 */
 void setup() {
-  // Configure the external ADCs
+  // Configure the external ADCs I2C addresses
   m1.addr = 5;
-  m1.treeID = 1;
   m2.addr = 6;
+  // Configure the tree IDs
+  // FIXME: Change these if deploying multiple dataloggers
+  m1.treeID = 1;
   m2.treeID = 2;
   // Initialize the hardware
   hardware_init();
@@ -59,7 +62,7 @@ int schedule(struct pt * pt){
   PT_INIT(&baseline1_thd);
   PT_INIT(&baseline2_thd);
   // Wait for threads to complete
-  rendezvous = 2; // We have two copies running
+  rendezvous = thd_count;
   while(rendezvous){
     baseline(&baseline1_thd, m1, rendezvous);
     baseline(&baseline2_thd, m2, rendezvous);
@@ -78,7 +81,7 @@ int schedule(struct pt * pt){
   PT_INIT(&delta1_thd);
   PT_INIT(&delta2_thd);
   // Wait for threads to complete
-  rendezvous = 2; // we have two copies running
+  rendezvous = thd_count;
   while(rendezvous){
     delta(&delta1_thd, m1, rendezvous);
     delta(&delta2_thd, m2, rendezvous);
@@ -86,7 +89,9 @@ int schedule(struct pt * pt){
   }
   
   PLOG_VERBOSE << "Finished logging";
-  sleep_cycle(5, 0);  //<Sleep until the next multiple of 5 minutes
+  // Avoid transmitting at the same time as another datalogger
+  int offset = 5 * max(m1.treeID, m2.treeID);
+  sleep_cycle(5, offset);  //<Sleep until the next multiple of 5 minutes
   PT_RESTART(pt); //< Loop back to the beginning
   PT_END(pt);
 }
@@ -97,7 +102,7 @@ This function is called inside a hidden loop in the Arduino framework.
 We're using it for protothread scheduling. All the real work happens inside the protothreads.
 */
 void loop() {
-  measure(&measure1_thd, m1);  //< Actually performs measurement.
+  //measure(&measure1_thd, m1);  //< Actually performs measurement.
   measure(&measure2_thd, m2);  //< Actually performs measurement.
   schedule(&schedule_thd); //< Dictates the timing of calculations
 
