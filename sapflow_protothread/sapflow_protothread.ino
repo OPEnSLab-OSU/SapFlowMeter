@@ -57,6 +57,9 @@ This is the schedule:
 int schedule(struct pt * pt){
   PT_BEGIN(pt);
   static char rendezvous;
+  // Avoid transmitting at the same time as another datalogger
+  int offset = 5 * max(m1.treeID, m2.treeID);
+  sleep_cycle(15, offset);  //<Sleep until the next multiple of 15 minutes
   /* Calculate the baseline temperatures */
   // Initialize baseline threads
   PT_INIT(&baseline1_thd);
@@ -89,9 +92,6 @@ int schedule(struct pt * pt){
   }
   
   PLOG_VERBOSE << "Finished logging";
-  // Avoid transmitting at the same time as another datalogger
-  int offset = 5 * max(m1.treeID, m2.treeID);
-  sleep_cycle(5, offset);  //<Sleep until the next multiple of 5 minutes
   PT_RESTART(pt); //< Loop back to the beginning
   PT_END(pt);
 }
@@ -102,7 +102,7 @@ This function is called inside a hidden loop in the Arduino framework.
 We're using it for protothread scheduling. All the real work happens inside the protothreads.
 */
 void loop() {
-  //measure(&measure1_thd, m1);  //< Actually performs measurement.
+  measure(&measure1_thd, m1);  //< Actually performs measurement.
   measure(&measure2_thd, m2);  //< Actually performs measurement.
   schedule(&schedule_thd); //< Dictates the timing of calculations
 

@@ -10,7 +10,7 @@ void hardware_init(void){
   USBDevice.attach();
   Serial.begin(115200);
   Serial.println("Serial connected");
-  FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_2S);
+  FeatherFault::StartWDT(FeatherFault::WDTTimeout::WDT_4S);
   pinMode(EN_3v3, OUTPUT);
   pinMode(EN_5v, OUTPUT);
   pinMode(I2C_SCL, INPUT_PULLUP);
