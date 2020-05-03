@@ -1,0 +1,12 @@
+Logger2: SD card issues
+Tree1: Data looks noisy. Some double-pulses.
+Tree2: Strange behavior on graph, but unprocessed data looks normal
+Logger4: LoRa timeout
+Tree1: Heater broken
+Tree2: No data
+Logger6: LoRa timeout
+Tree6: Data looks good, but timestamp is wrong. Maybe the probe needs a few seconds to turn on?
+Logger8: SD card issues
+Tree7: Serious issues with data. Not sure if bit corruption or water in probe
+Tree8: No data
+Logger10: I2C bus issues.
