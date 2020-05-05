@@ -1,0 +1,8 @@
+Logger2: Date reset to 2000-01-23, but lasted 4 days
+Tree1: No failures.
+Tree2: No failures.
+Logger4: Date reset to 2000-01-11, but lasted 5 days
+Tree3: Upper probe failed open, heater probe failed
+Tree4: No failures.
+Logger8: No data. RTC suspect?
+

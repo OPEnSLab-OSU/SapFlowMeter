@@ -1,0 +1,22 @@
+2000-01-03 03:50:36.000 INFO  [0] [sleep_cycle@32] Sleeping until nearest multiple of 15 minutes with 40 seconds offset
+
+2000-01-03 03:50:36.642 VERB  [0] [sleep_cycle@39] Rolled back to 2000.01.03 03:45:00
+
+2000-01-03 03:50:36.667 DEBUG [0] [sleep_cycle@43] Alarm set to 2000.01.03 04:00:40
+
+2000-01-03 03:50:36.692 DEBUG [0] [feather_sleep@15] Waiting on alarm pin...
+2000-01-03 04:01:16.000 INFO  [0] [sleep_cycle@32] Sleeping until nearest multiple of 15 minutes with 40 seconds offset
+
+2000-01-03 04:01:16.031 VERB  [0] [sleep_cycle@39] Rolled back to 2000.01.03 04:00:00
+
+2000-01-03 04:01:16.062 DEBUG [0] [sleep_cycle@43] Alarm set to 2000.01.03 04:15:40
+
+2000-01-03 04:01:16.087 DEBUG [0] [feather_sleep@15] Waiting on alarm pin...
+2020-05-01 17:09:51.000 INFO  [0] [sleep_cycle@32] Sleeping until nearest multiple of 15 minutes with 40 seconds offset
+
+2020-05-01 17:09:51.031 VERB  [0] [sleep_cycle@39] Rolled back to 2020.05.01 17:00:00
+
+2020-05-01 17:09:51.056 DEBUG [0] [sleep_cycle@43] Alarm set to 2020.05.01 17:15:40
+
+2020-05-01 17:09:51.087 DEBUG [0] [feather_sleep@15] Waiting on alarm pin...
+2020-05-01 17:15:40.000 DEBUG [0] [hardware_init@33] Time set
