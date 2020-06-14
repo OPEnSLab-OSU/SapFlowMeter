@@ -18,3 +18,4 @@ Currently we have designed flexible PCB probes, and we are testing our sap flow 
 - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
 - [FeatherFault](https://github.com/OPEnSLab-OSU/FeatherFault)
 - [ASF core](https://github.com/adafruit/Adafruit_ASFcore.git) commit f6ffa8b
+- [Plog](https://github.com/OPEnSLab-OSU/plog)
