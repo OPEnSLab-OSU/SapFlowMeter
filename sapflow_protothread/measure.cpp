@@ -150,13 +150,13 @@ int delta(struct pt *pt, struct measure_stack &m, char &rdv)
     sapfile << time << ", "<< m.reference.upper << ", "; MARK;
     sapfile << m.reference.lower << ", "<< m.flow << ", "<< endl; MARK;
     sapfile.close(); MARK;
-    // Send message over LoRa
+    /* Send message over LoRa
     lora_init();
     MARK;
     build_msg(m.flow, m.reference.upper, m.treeID);
     MARK;
     send_msg();
-    MARK;
+    MARK;*/
   } 
   // Wait until all parties have reached the rendezvous
   --rdv;
