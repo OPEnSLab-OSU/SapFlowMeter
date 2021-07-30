@@ -5,6 +5,7 @@
 #include "sd_log.h"
 #include "lora.h"
 #include <Wire.h>
+#include "FeatherFault.h"
 
 /** @file */
 
