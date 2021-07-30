@@ -5,17 +5,14 @@
 
 /** @file */
 
-const int thd_count = 2;
+const int thd_count = 1;
 /// Persistent variables for measurement
-struct measure_stack m1, m2;
+struct measure_stack m1;
 
 struct pt schedule_thd, ///< Control structure for schedule() thread
 measure1_thd, ///< Control structure for measure() thread
 baseline1_thd, ///< Control structure for baseline() thread
 delta1_thd, ///< Control structure for delta() thread
-measure2_thd, ///< Control structure for measure() thread
-baseline2_thd, ///< Control structure for baseline() thread
-delta2_thd; ///< Control structure for delta() thread
 
 
 /** One-time initialization
@@ -25,19 +22,16 @@ It initializes some hardware, puts the protothreads in a known state, and begins
 */
 void setup() {
   // Configure the external ADCs I2C addresses
-  m1.addr = 5;
-  m2.addr = 6;
+  m1.addr = 6;
   // Configure the tree IDs
   // FIXME: Change these if deploying multiple dataloggers
   m1.treeID = 1;
-  m2.treeID = 2;
   // Initialize the hardware
   hardware_init();
   // Initialize the logger
   syslog_init();
   //Initialize the thread control structures
   PT_INIT(&measure1_thd);
-  PT_INIT(&measure2_thd);
   PT_INIT(&schedule_thd);
 }
 
@@ -63,12 +57,10 @@ int schedule(struct pt * pt){
   /* Calculate the baseline temperatures */
   // Initialize baseline threads
   PT_INIT(&baseline1_thd);
-  PT_INIT(&baseline2_thd);
   // Wait for threads to complete
   rendezvous = thd_count;
   while(rendezvous){
     baseline(&baseline1_thd, m1, rendezvous);
-    baseline(&baseline2_thd, m2, rendezvous);
     PT_YIELD(pt);
   }
   
@@ -82,12 +74,10 @@ int schedule(struct pt * pt){
   /* Calculate the sapflow, send over LoRa */
   // Initialize the delta threads
   PT_INIT(&delta1_thd);
-  PT_INIT(&delta2_thd);
   // Wait for threads to complete
   rendezvous = thd_count;
   while(rendezvous){
     delta(&delta1_thd, m1, rendezvous);
-    delta(&delta2_thd, m2, rendezvous);
     PT_YIELD(pt);
   }
   
@@ -103,7 +93,6 @@ We're using it for protothread scheduling. All the real work happens inside the 
 */
 void loop() {
   measure(&measure1_thd, m1);  //< Actually performs measurement.
-  measure(&measure2_thd, m2);  //< Actually performs measurement.
   schedule(&schedule_thd); //< Dictates the timing of calculations
 
 }
